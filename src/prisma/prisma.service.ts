@@ -10,8 +10,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           url: process.env.DATABASE_URL,
         },
       },
+      omit: {
+        user: {
+          hash: true,
+        },
+      },
     });
   }
+
   async onModuleInit() {
     await this.$connect();
   }

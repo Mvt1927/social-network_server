@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma, User } from '@prisma/client';
+import { UserWithoutHash } from './user.type';
 
 @Injectable()
 export class UsersService {
@@ -10,7 +11,7 @@ export class UsersService {
     return this.prisma.user.findUnique(args);
   }
 
-  async FindMany(args?: Prisma.UserFindManyArgs): Promise<User[]> {
+  async FindMany(args?: Prisma.UserFindManyArgs): Promise<UserWithoutHash[]> {
     return this.prisma.user.findMany(args);
   }
 

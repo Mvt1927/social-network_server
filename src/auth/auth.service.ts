@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
+import { SignInAuthDto } from './dto/signin.auth.dto';
+import { AuthResponse, IAuthResponseSuccess } from './auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -11,18 +13,33 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  // async signin(dto: AuthSignIn) {
-  //   const user = await this.usersService.findOne({
-  //     where: {
-  //       username: dto.username,
-  //     },
-  //   });
-  //   if (!user) return { status: false, msg: 'Incorrect Username or Password' };
-  //   const pwMatches = await argon.verify(user.hash, dto.password).catch((_) => {
-  //     return false;
-  //   });
-  //   if (pwMatches) {
-  //     return this.signToken(user.id, user.username);
-  //   } else return { status: pwMatches, msg: 'Incorrect Username or Password' };
-  // }
+  async signin(dto: SignInAuthDto): Promise<AuthResponse | any> {
+    return this.usersService.FindMany({
+      omit: {
+        hash: false,
+      },
+    });
+
+    // return {
+    //   data: {
+    //     token: 'token',
+    //     refreshToken: 'refreshToken',
+    //     user: ,
+    //   },
+    //   statusCode: HttpStatus.OK,
+    //   message: 'Success',
+    // };
+    // const user = await this.usersService.findOne({
+    //   where: {
+    //     username: dto.username,
+    //   },
+    // });
+    // if (!user) return { status: false, msg: 'Incorrect Username or Password' };
+    // const pwMatches = await argon.verify(user.hash, dto.password).catch((_) => {
+    //   return false;
+    // });
+    // if (pwMatches) {
+    //   return this.signToken(user.id, user.username);
+    // } else return { status: pwMatches, msg: 'Incorrect Username or Password' };
+  }
 }
