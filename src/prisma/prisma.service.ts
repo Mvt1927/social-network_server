@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { userOmitArgs } from 'src/users/utils';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -11,9 +12,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         },
       },
       omit: {
-        user: {
-          hash: true,
-        },
+        user: userOmitArgs,
       },
     });
   }

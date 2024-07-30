@@ -1,11 +1,11 @@
-import { IResponseError, IResponseSuccess } from '../utils/interface';
-import { UserWithoutHash } from 'src/users/user.type';
+import { UserWithoutHiddenAttributes } from 'src/users/utils';
+import { IResponseError, IResponseSuccess } from 'src/utils';
 
 export interface IAuthResponseSuccess extends IResponseSuccess {
   data: {
     token: string;
     refreshToken: string;
-    user: Partial<UserWithoutHash>;
+    user: Partial<UserWithoutHiddenAttributes>;
   };
 }
 export interface IAuthResponseError extends IResponseError {}
