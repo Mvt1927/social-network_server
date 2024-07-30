@@ -24,11 +24,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post(['signin', 'signin/username'])
-  async signinWithUsername(
-    @Request() req,
-    // @Body() signinDto: SignInAuthWithUsernameDto,
-  ): Promise<any> {
-    console.log(req);
+  async signinWithUsername(@Request() req): Promise<any> {
     return this.authService.signin(req.user);
   }
 

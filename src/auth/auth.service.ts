@@ -37,8 +37,8 @@ export class AuthService {
     });
 
     if (!user) {
-      return null;
-      // throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      // return null;
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
     const { hash } = user;
@@ -46,8 +46,7 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, hash);
 
     if (!isMatch) {
-      // throw new HttpException('Invalid password', HttpStatus.BAD_REQUEST);
-      return null;
+      throw new HttpException('Invalid password', HttpStatus.BAD_REQUEST);
     }
 
     const { ...userWithoutHiddenAttributes }: UserWithoutHiddenAttributes =
