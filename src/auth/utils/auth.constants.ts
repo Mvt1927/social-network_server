@@ -11,3 +11,5 @@ export enum TokenExpiresIn {
   M15 = '15m',
   S30 = '30s',
 }
+
+export const SALT_ROUNDS = 10;

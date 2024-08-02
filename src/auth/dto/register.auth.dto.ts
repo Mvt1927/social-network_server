@@ -1,8 +1,14 @@
-import { IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { SignInAuthTokenType } from '../utils';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SignInAuthWithUsernameDto {
+export class RegisterAuthDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
@@ -13,14 +19,10 @@ export class SignInAuthWithUsernameDto {
   @IsString()
   @MinLength(8)
   password: string;
-}
 
-export class SignInAuthWithTokenDto {
+  @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  token: string;
-
-  @IsNotEmpty()
-  @IsEnum(SignInAuthTokenType)
-  type: SignInAuthTokenType;
+  @IsEmail()
+  email: string;
 }

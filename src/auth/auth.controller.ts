@@ -7,14 +7,10 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiExtraModels, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import {
-  SignInAuthWithEmailDto,
-  SignInAuthWithTokenDto,
-  SignInAuthWithUsernameDto,
-} from './dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { RegisterAuthDto } from './dto/register.auth.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -23,28 +19,13 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @Post(['signin', 'signin/username'])
+  @Post('signin')
   async signinWithUsername(@Request() req): Promise<any> {
     return this.authService.signin(req.user);
   }
 
-  @HttpCode(HttpStatus.OK)
-  @Post('signin/email')
-  async signinWithEmail(
-    @Body()
-    signinDto: SignInAuthWithEmailDto,
-  ): Promise<any> {
-    // console.log(typeof signinDto);
-    // return this.authService.signin(signinDto);
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @Post('signin/token')
-  async signinWithToken(
-    @Body()
-    signinDto: SignInAuthWithTokenDto,
-  ): Promise<any> {
-    // console.log(typeof signinDto);
-    // return this.authService.signin(signinDto);
+  @Post('signup')
+  async signup(@Body() dto: RegisterAuthDto): Promise<any> {
+    return this.authService.register(dto);
   }
 }
