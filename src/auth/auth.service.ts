@@ -10,12 +10,6 @@ import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import argon2 from 'argon2';
 
-import { AuthResponse } from './utils/auth.interface';
-import {
-  UserHiddenAttributesType,
-  UserWithPartialHiddenAttributes,
-  UserWithoutHiddenAttributes,
-} from 'src/users/utils';
 import { SignInAuthWithEmailDto } from './dto';
 import { RegisterAuthDto, SignInAuthWithUsernameDto } from './dto/auth.dto';
 import { SALT_ROUNDS } from './constants/hash.const';
@@ -23,7 +17,14 @@ import { TokenExpiresIn } from './enums';
 import { invertBooleanValues } from 'src/utils';
 import { USER_OMIT } from 'src/users/constants';
 import { removeKeys } from 'src/utils/object.utils';
-import { User } from '@prisma/client';
+import {
+  UserHiddenAttributesType,
+  UserWithPartialHiddenAttributes,
+  UserWithoutHiddenAttributes,
+} from 'src/users/types';
+import { any } from 'joi';
+
+type AuthResponse = any
 
 @Injectable()
 export class AuthService {
@@ -82,7 +83,7 @@ export class AuthService {
     return this.validateUser(password, user);
   }
 
-  async signin(user: UserWithoutHiddenAttributes): Promise<AuthResponse> {
+  async signin(user: UserWithoutHiddenAttributes): Promise<any> {
     return this.returnAuthResponse(user);
   }
 

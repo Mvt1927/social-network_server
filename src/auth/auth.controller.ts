@@ -14,7 +14,8 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { RegisterAuthDto, SignInAuthWithUsernameDto } from './dto/auth.dto';
 import { User } from '@prisma/client';
-import { AuthResponse } from './utils/auth.interface';
+
+type AuthResponse = any;
 
 @ApiTags('Authentication')
 @Controller('auth')
