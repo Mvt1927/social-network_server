@@ -1,9 +1,9 @@
 import { ValidationError } from '@nestjs/common';
-import { ValidatorOptions } from 'class-validator';
 
-export const VALIDATOR_OPTIONS: ValidatorOptions = {
-  validationError: { target: false, value: false },
-};
+export const isUndefined = (value: unknown): value is undefined =>
+  typeof value === 'undefined';
+
+export const isNull = (value: unknown): value is null => value === null;
 
 export function countTotalErrors(errors: ValidationError[]): number {
   return errors.reduce((count, error) => {

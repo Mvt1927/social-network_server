@@ -1,5 +1,6 @@
+import { IResponseError, IResponseSuccess } from 'src/interfaces/interface';
 import { UserWithoutHiddenAttributes } from 'src/users/utils';
-import { IResponseError, IResponseSuccess } from 'src/utils';
+// import { IResponseError, IResponseSuccess } from 'src/utils';
 
 export interface IAuthResponseSuccess extends IResponseSuccess {
   data: {

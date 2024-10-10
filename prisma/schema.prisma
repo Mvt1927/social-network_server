@@ -20,7 +20,7 @@ model User {
 
   // begin hidden //
   hash String
-  salt String?
+  // salt String?
   // end hidden //
 
   email     String  @unique

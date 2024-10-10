@@ -8,24 +8,22 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
-
-import { SignInAuthWithUsernameDto } from './dto/signin.auth.dto';
+import argon2 from 'argon2';
 
 import { AuthResponse } from './utils/auth.interface';
-import { SALT_ROUNDS, TokenExpiresIn } from './utils';
 import {
   UserHiddenAttributesType,
-  UserOmitArgs,
-  UserOmitArgsKeys,
   UserWithPartialHiddenAttributes,
   UserWithoutHiddenAttributes,
-  userOmitArgs,
 } from 'src/users/utils';
 import { SignInAuthWithEmailDto } from './dto';
-import { RegisterAuthDto } from './dto/register.auth.dto';
+import { RegisterAuthDto, SignInAuthWithUsernameDto } from './dto/auth.dto';
+import { SALT_ROUNDS } from './constants/hash.const';
+import { TokenExpiresIn } from './enums';
+import { invertBooleanValues } from 'src/utils';
+import { USER_OMIT } from 'src/users/constants';
+import { removeKeys } from 'src/utils/object.utils';
 import { User } from '@prisma/client';
-import { log } from 'console';
-import { splitObject, splitObject2 } from 'src/utils';
 
 @Injectable()
 export class AuthService {
@@ -36,67 +34,60 @@ export class AuthService {
   ) {}
 
   async validateUser(
-    dto: SignInAuthWithUsernameDto | SignInAuthWithEmailDto,
+    password: string,
     user: UserWithPartialHiddenAttributes,
   ): Promise<UserWithoutHiddenAttributes> {
-    const { password } = dto;
-
     if (!user) {
-      // return null;
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { hash, salt, ...userWithoutHashAndSalt } = user;
+    const { hash } = user;
 
-    const isMatch = await bcrypt.compare(password, hash);
+    const isVerified = await argon2.verify(hash, password);
 
-    // delete user.hash;
-
-    if (!isMatch) {
+    if (!isVerified) {
       throw new HttpException('Invalid password', HttpStatus.BAD_REQUEST);
     }
 
-    return userWithoutHashAndSalt;
+    return removeKeys(user, Object.keys(USER_OMIT));
   }
 
-  async validateUserByEmail(dto: SignInAuthWithEmailDto) {
-    const { email } = dto;
-    const user = await this.usersService.findOne({
-      where: {
-        email: email,
-      },
-      omit: {
-        hash: false,
-      },
+  async validateUserByEmail(
+    dto: SignInAuthWithEmailDto,
+  ): Promise<UserWithoutHiddenAttributes> {
+    const { email, password } = dto;
+    const user = await this.usersService.findOneWithEmail(email, {
+      omit: invertBooleanValues(USER_OMIT),
     });
 
-    return this.validateUser(dto, user);
+    if (!user) {
+      return null;
+    }
+
+    return this.validateUser(password, user);
   }
 
-  async validateUserByUsername(dto: SignInAuthWithUsernameDto) {
-    const { username } = dto;
-    const user = await this.usersService.findOne({
-      where: {
-        username: username,
-      },
-      omit: {
-        hash: false,
-      },
+  async validateUserByUsername(
+    dto: SignInAuthWithUsernameDto,
+  ): Promise<UserWithoutHiddenAttributes> {
+    const { username, password } = dto;
+    const user = await this.usersService.findOneWithUsername(username, {
+      omit: invertBooleanValues(USER_OMIT),
     });
 
-    return this.validateUser(dto, user);
+    if (!user) {
+      return null;
+    }
+
+    return this.validateUser(password, user);
   }
 
   async signin(user: UserWithoutHiddenAttributes): Promise<AuthResponse> {
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-    return this.returnAuthResponse(user as UserWithPartialHiddenAttributes);
+    return this.returnAuthResponse(user);
   }
 
   async register(dto: RegisterAuthDto): Promise<AuthResponse> {
-    const users = await this.usersService.FindMany({
+    const users = await this.usersService.findMany({
       where: {
         OR: [
           {
@@ -120,12 +111,12 @@ export class AuthService {
       );
     }
     const { password, ...dtoWithoutPassword } = dto;
-    const { salt, hash } = await this.hashPassword(password);
+    const { hash } = await this.hashPassword(password);
     const user = await this.usersService.create({
       data: {
         ...dtoWithoutPassword,
         hash: hash,
-        salt: salt,
+        // salt: salt,
       },
     });
 
@@ -133,10 +124,8 @@ export class AuthService {
   }
 
   async hashPassword(password: string): Promise<UserHiddenAttributesType> {
-    const salt = await bcrypt.genSalt(SALT_ROUNDS);
     return {
-      salt: salt,
-      hash: await bcrypt.hash(password, salt),
+      hash: await argon2.hash(password),
     };
   }
 
@@ -144,7 +133,7 @@ export class AuthService {
     user: UserWithPartialHiddenAttributes,
   ): Promise<AuthResponse> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { hash, salt, ...userWithoutHashAndSalt } = user;
+    const { hash, ...userWithoutHashAndSalt } = user;
 
     const { token, refreshToken } = await this.signToken(
       userWithoutHashAndSalt,
@@ -164,9 +153,16 @@ export class AuthService {
     user: UserWithoutHiddenAttributes,
     expiresIn = TokenExpiresIn.S30,
   ): Promise<{ token: string; refreshToken: string }> {
-    const token = await this.jwtService.signAsync(user, {
-      expiresIn: expiresIn,
-    });
+    const token = await this.jwtService.signAsync(
+      {
+        sub: {
+          user: user,
+        },
+      },
+      {
+        expiresIn: expiresIn,
+      },
+    );
 
     const refreshPayload = {
       token: token,

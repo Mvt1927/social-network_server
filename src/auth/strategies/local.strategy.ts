@@ -1,38 +1,32 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { AuthService } from '../auth.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { SignInAuthWithEmailDto, SignInAuthWithUsernameDto } from '../dto';
-import { CustomStrategy } from './custom.strategy';
-import { plainToClass } from 'class-transformer';
-import { validate } from 'class-validator';
-import {
-  VALIDATOR_OPTIONS,
-  getValidationErrorWithLeastErrors,
-} from 'src/utils';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Strategy } from 'passport-local';
 
 @Injectable()
-export class LocalStrategy extends PassportStrategy(CustomStrategy) {
+export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly authService: AuthService) {
-    super();
+    super({
+      usernameField: 'usernameOrEmail',
+    });
   }
 
-  async validate(dto: any): Promise<any> {
-    const usernameBody = plainToClass(SignInAuthWithUsernameDto, dto);
-    const usernameBodyErrors = await validate(usernameBody, VALIDATOR_OPTIONS);
+  async validate(usernameOrEmail: string, password: string): Promise<any> {
+    let user = await this.authService.validateUserByUsername({
+      username: usernameOrEmail,
+      password,
+    });
 
-    if (usernameBodyErrors.length === 0) {
-      return await this.authService.validateUserByUsername(usernameBody);
+    if (!user) {
+      user = await this.authService.validateUserByEmail({
+        email: usernameOrEmail,
+        password,
+      });
     }
 
-    const emailBody = plainToClass(SignInAuthWithEmailDto, dto);
-    const emailBodyErrors = await validate(emailBody, VALIDATOR_OPTIONS);
-
-    if (emailBodyErrors.length === 0) {
-      return await this.authService.validateUserByEmail(emailBody);
+    if (!user) {
+      throw new UnauthorizedException();
     }
-
-    throw new BadRequestException(
-      getValidationErrorWithLeastErrors([usernameBodyErrors, emailBodyErrors]),
-    );
+    return user;
   }
 }

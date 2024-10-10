@@ -6,9 +6,7 @@
  */
 import { createSeedClient } from '@snaplet/seed';
 import { copycat } from '@snaplet/copycat';
-import * as bcrypt from 'bcrypt';
-import { SALT_ROUNDS } from 'src/auth/utils';
-
+import * as argon2 from 'argon2';
 const main = async () => {
   const seed = await createSeedClient();
 
@@ -22,12 +20,9 @@ const main = async () => {
       id: ({ seed }) => copycat.uuid(seed),
       username: ({ seed }) => copycat.username(seed),
       email: ({ seed }) => copycat.email(seed),
-      salt: () => bcrypt.genSaltSync(SALT_ROUNDS),
-      hash: ({ data }) =>
-        bcrypt.hashSync(
-          defaultPassword,
-          data.salt || bcrypt.genSaltSync(SALT_ROUNDS),
-        ),
+      hash: async () => {
+        return await argon2.hash(defaultPassword);
+      },
     }),
   );
 

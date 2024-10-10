@@ -1,20 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
-import { userOmitArgs } from 'src/users/utils';
+import { ConfigNames, IDbConfig } from 'src/config/interfaces/config.interface';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-  constructor() {
-    super({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-      omit: {
-        user: userOmitArgs,
-      },
-    });
+  constructor(private readonly configService: ConfigService) {
+    const dbConfig = configService.get<IDbConfig>(ConfigNames.DB);
+    super(dbConfig);
   }
 
   async onModuleInit() {

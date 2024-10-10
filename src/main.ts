@@ -4,16 +4,18 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
-import { VALIDATOR_OPTIONS } from 'src/utils';
+import { VALIDATOR_OPTIONS } from 'src/constants';
+import { ConfigNames } from './config/interfaces/config.interface';
+import { extractVersionValue } from './utils/string.utils';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config: ConfigService = new ConfigService();
 
-  const PORT = config.get('PORT') || 3000;
-  const SERVER_VERSION = config.get('SERVER_VERSION') || '1.0';
+  const PORT = config.get(ConfigNames.PORT) || 3000;
+  const SERVER_VERSION = config.get(ConfigNames.VERSION) || '1';
 
-  app.setGlobalPrefix(`api/v${parseInt(SERVER_VERSION)}`);
+  app.setGlobalPrefix(`api/v${extractVersionValue(SERVER_VERSION)}`);
   app.useGlobalPipes(
     new ValidationPipe({
       ...VALIDATOR_OPTIONS,
@@ -32,7 +34,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
 
   SwaggerModule.setup('api/swagger', app, document);
-
   try {
     await app.listen(PORT, () => {
       console.log(`Running on Port ${PORT}`);
@@ -40,5 +41,8 @@ async function bootstrap() {
   } catch (err) {
     console.log(err);
   }
+  await app.getUrl().then((url) => {
+    console.log(`Swagger Docs: ${url}/api/swagger`);
+  });
 }
 bootstrap();

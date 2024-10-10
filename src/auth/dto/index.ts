@@ -1,2 +1,2 @@
-export * from './signin.auth.dto';
-export * from './signin-with-email.auth.dto';
+export * from './auth.dto';
+export * from './password-auth.dtos';
