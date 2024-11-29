@@ -9,6 +9,5 @@ export const test: UserWithPartialHiddenAttributes = {
   username: 'test',
   createAt: new Date(),
   updateAt: new Date(),
-  firstName: 'test',
-  lastName: 'test',
-};
+  fullname: 'test',
+}

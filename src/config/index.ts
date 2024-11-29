@@ -2,8 +2,6 @@ import { USER_OMIT } from 'src/users/constants';
 import { IConfig } from './interfaces/config.interface';
 
 export function config(): IConfig {
-  const publicKey = ' ';
-  const privateKey = '';
 
   return {
     id: process.env.SERVER_ID,
@@ -11,9 +9,9 @@ export function config(): IConfig {
     port: parseInt(process.env.PORT, 10),
     domain: process.env.DOMAIN,
     jwt: {
+      secret: process.env.JWT_SECRET,
       access: {
-        privateKey,
-        publicKey,
+        secret: process.env.JWT_ACCESS_SECRET,
         time: parseInt(process.env.JWT_ACCESS_TIME, 10),
       },
       confirmation: {

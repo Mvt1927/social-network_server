@@ -10,7 +10,8 @@ export interface IAccessJwt {
 }
 
 export interface IJwt {
-  access: IAccessJwt;
+  secret: string;
+  access: ISingleJwt;
   confirmation: ISingleJwt;
   resetPassword: ISingleJwt;
   refresh: ISingleJwt;

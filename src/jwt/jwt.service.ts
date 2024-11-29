@@ -1,26 +1,78 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CommonService } from 'src/common/common.service';
+import { JwtService as BaseJwtService } from '@nestjs/jwt';
 import { IJwt } from 'src/config/interfaces/jwt.interface';
-import { IAccessPayload, IEmailPayload, IRefreshPayload } from './interfaces';
-import { JwtService as NestJwtService } from '@nestjs/jwt';
+
 
 @Injectable()
 export class JwtService {
-  private readonly jwtConfig: IJwt;
-  private readonly issuer: string;
-  private readonly domain: string;
+    
+    jwtConfig: IJwt;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly commonService: CommonService,
-    private readonly jwtService: NestJwtService,
-  ) {}
+    constructor(
+        private baseJwtService: BaseJwtService,
+        private configService: ConfigService
+    ) {
+        this.jwtConfig = this.configService.get('jwt');
+    }
 
-  private static async generateTokenAsync(
-    payload: IAccessPayload | IEmailPayload | IRefreshPayload,
-    secret: string,
-  ) {
-    console.log('payload', payload);
-  }
+    async verifyBaseToken(token: string) {
+        return this.baseJwtService.verifyAsync(token);
+    }
+
+    async signBaseToken(payload: any) {
+        return this.baseJwtService.signAsync(payload);
+    }
+
+    async verifyAccessToken(token: string) {
+        return this.baseJwtService.verifyAsync(token, {
+            secret: this.jwtConfig.access.secret
+        });
+    }
+
+    async signAccessToken(payload: any) {
+        return this.baseJwtService.signAsync(payload, {
+            secret: this.jwtConfig.access.secret,
+            expiresIn: this.jwtConfig.access.time
+        });
+    }
+
+    async verifyRefreshToken(token: string) {
+        return this.baseJwtService.verifyAsync(token, {
+            secret: this.jwtConfig.refresh.secret
+        });
+    }
+    
+    async signRefreshToken(payload: any) {
+        return this.baseJwtService.signAsync(payload, {
+            secret: this.jwtConfig.refresh.secret,
+            expiresIn: this.jwtConfig.refresh.time
+        });
+    }
+
+    async verifyConfirmationToken(token: string) {
+        return this.baseJwtService.verifyAsync(token, {
+            secret: this.jwtConfig.confirmation.secret
+        });
+    }
+
+    async signConfirmationToken(payload: any) {
+        return this.baseJwtService.signAsync(payload, {
+            secret: this.jwtConfig.confirmation.secret,
+            expiresIn: this.jwtConfig.confirmation.time
+        });
+    }
+
+    async verifyResetPasswordToken(token: string) {
+        return this.baseJwtService.verifyAsync(token, {
+            secret: this.jwtConfig.resetPassword.secret
+        });
+    }
+
+    async signResetPasswordToken(payload: any) {
+        return this.baseJwtService.signAsync(payload, {
+            secret: this.jwtConfig.resetPassword.secret,
+            expiresIn: this.jwtConfig.resetPassword.time
+        });
+    }
 }

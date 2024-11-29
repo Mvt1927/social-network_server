@@ -1,89 +1,60 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
-import * as bcrypt from 'bcrypt';
 import argon2 from 'argon2';
 
-import { SignInAuthWithEmailDto } from './dto';
-import { RegisterAuthDto, SignInAuthWithUsernameDto } from './dto/auth.dto';
-import { SALT_ROUNDS } from './constants/hash.const';
-import { TokenExpiresIn } from './enums';
-import { invertBooleanValues } from 'src/utils';
-import { USER_OMIT } from 'src/users/constants';
-import { removeKeys } from 'src/utils/object.utils';
+import { RegisterAuthDto, LoginAuthDto } from './dto/auth.dto';
 import {
   UserHiddenAttributesType,
   UserWithPartialHiddenAttributes,
-  UserWithoutHiddenAttributes,
 } from 'src/users/types';
-import { any } from 'joi';
+import { forEach } from 'lodash';
+import { JwtService } from 'src/jwt/jwt.service';
 
-type AuthResponse = any
+type AuthResponse = any;
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private configService: ConfigService,
   ) {}
 
-  async validateUser(
-    password: string,
-    user: UserWithPartialHiddenAttributes,
-  ): Promise<UserWithoutHiddenAttributes> {
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-
-    const { hash } = user;
-
-    const isVerified = await argon2.verify(hash, password);
-
-    if (!isVerified) {
-      throw new HttpException('Invalid password', HttpStatus.BAD_REQUEST);
-    }
-
-    return removeKeys(user, Object.keys(USER_OMIT));
-  }
-
-  async validateUserByEmail(
-    dto: SignInAuthWithEmailDto,
-  ): Promise<UserWithoutHiddenAttributes> {
-    const { email, password } = dto;
-    const user = await this.usersService.findOneWithEmail(email, {
-      omit: invertBooleanValues(USER_OMIT),
-    });
-
-    if (!user) {
-      return null;
-    }
-
-    return this.validateUser(password, user);
-  }
-
-  async validateUserByUsername(
-    dto: SignInAuthWithUsernameDto,
-  ): Promise<UserWithoutHiddenAttributes> {
+  async signin(dto: LoginAuthDto): Promise<AuthResponse> {
     const { username, password } = dto;
-    const user = await this.usersService.findOneWithUsername(username, {
-      omit: invertBooleanValues(USER_OMIT),
+
+    const user = await this.usersService.findUnique({
+      where: {
+        username: username,
+      },
+      omit: {
+        hash: false,
+      },
     });
 
     if (!user) {
-      return null;
+      throw new BadRequestException([
+        {
+          property: 'username',
+          constraints: {
+            isUserExists: 'User does not exist',
+          },
+        },
+      ]);
     }
 
-    return this.validateUser(password, user);
-  }
+    const isPasswordValid = await argon2.verify(user.hash, password);
 
-  async signin(user: UserWithoutHiddenAttributes): Promise<any> {
+    if (!isPasswordValid) {
+      throw new BadRequestException([
+        {
+          property: 'password',
+          constraints: {
+            isPasswordValid: 'Password is invalid',
+          },
+        },
+      ]);
+    }
+
     return this.returnAuthResponse(user);
   }
 
@@ -107,10 +78,31 @@ export class AuthService {
     });
 
     if (users.length > 0) {
-      throw new BadRequestException(
-        `User with ${users[0].email === dto.email ? 'Email' : 'Username'} already exists`,
-      );
+      forEach(users, (user) => {
+        if (user.email === dto.email) {
+          throw new BadRequestException([
+            {
+              property: 'email',
+              constraints: {
+                isEmailExists: 'Email already exists',
+              },
+            },
+          ]);
+        }
+
+        if (user.username === dto.username) {
+          throw new BadRequestException([
+            {
+              property: 'username',
+              constraints: {
+                isUsernameExists: 'Username already exists',
+              },
+            },
+          ]);
+        }
+      });
     }
+
     const { password, ...dtoWithoutPassword } = dto;
     const { hash } = await this.hashPassword(password);
     const user = await this.usersService.create({
@@ -134,45 +126,38 @@ export class AuthService {
     user: UserWithPartialHiddenAttributes,
   ): Promise<AuthResponse> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { hash, ...userWithoutHashAndSalt } = user;
+    const { hash, ...userWithoutHash } = user;
 
-    const { token, refreshToken } = await this.signToken(
-      userWithoutHashAndSalt,
-    );
+    const { id, username, fullname } = userWithoutHash;
+
+    const payloadAccess = {
+      sub: {
+        user: {
+          id: id,
+          username: username,
+          fullname: fullname,
+        }
+      }
+    }
+
+    const payloadRefresh = {
+      sub: {
+        user: {
+          id: id,
+        }
+      }
+    }
+
+    const accessToken = await this.jwtService.signAccessToken(payloadAccess);
+    const refreshToken = await this.jwtService.signRefreshToken(payloadRefresh);
     return {
       statusCode: HttpStatus.OK,
-      message: 'User signed in successfully',
+      message: 'User has been successfully authenticated',
       data: {
-        user: userWithoutHashAndSalt,
-        token: token,
+        user: userWithoutHash,
+        token: accessToken,
         refreshToken: refreshToken,
       },
     };
-  }
-
-  async signToken(
-    user: UserWithoutHiddenAttributes,
-    expiresIn = TokenExpiresIn.S30,
-  ): Promise<{ token: string; refreshToken: string }> {
-    const token = await this.jwtService.signAsync(
-      {
-        sub: {
-          user: user,
-        },
-      },
-      {
-        expiresIn: expiresIn,
-      },
-    );
-
-    const refreshPayload = {
-      token: token,
-    };
-
-    const refreshToken = await this.jwtService.signAsync(refreshPayload, {
-      expiresIn: TokenExpiresIn.D30,
-    });
-
-    return { token, refreshToken };
   }
 }

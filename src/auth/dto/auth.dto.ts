@@ -3,62 +3,39 @@ import {
   IsEnum,
   IsNotEmpty,
   IsString,
+  Matches,
   MinLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { SignInAuthTokenType } from '../enums';
 
-export class RegisterAuthDto {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  username: string;
+import { PASSWORD_ERROR_MESSAGE, PASSWORD_REGEX, USERNAME_ERROR_MESSAGE, USERNAME_REGEX } from '../constants';
 
+export class PasswordDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   @MinLength(8)
+  @Matches(PASSWORD_REGEX, {
+    message: 'Password' + PASSWORD_ERROR_MESSAGE,
+  })
   password: string;
+}
 
+export class LoginAuthDto extends PasswordDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  @Matches(
+    USERNAME_REGEX,
+    { message: 'Username'+ USERNAME_ERROR_MESSAGE },
+  )
+  username: string;
+}
+
+export class RegisterAuthDto extends LoginAuthDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   @IsEmail()
   email: string;
-}
-
-export class SignInAuthWithEmailDto {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(8)
-  password: string;
-}
-
-export class SignInAuthWithUsernameDto {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  username: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(8)
-  password: string;
-}
-
-export class SignInAuthWithTokenDto {
-  @IsNotEmpty()
-  @IsString()
-  token: string;
-
-  @IsNotEmpty()
-  @IsEnum(SignInAuthTokenType)
-  type: SignInAuthTokenType;
 }
