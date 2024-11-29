@@ -9,6 +9,7 @@ import {
 } from 'src/users/types';
 import { forEach } from 'lodash';
 import { JwtService } from 'src/jwt/jwt.service';
+import { hideEmail } from 'src/users/utils';
 
 type AuthResponse = any;
 
@@ -148,6 +149,8 @@ export class AuthService {
       }
     }
 
+    userWithoutHash.email = hideEmail(userWithoutHash.email);
+
     const accessToken = await this.jwtService.signAccessToken(payloadAccess);
     const refreshToken = await this.jwtService.signRefreshToken(payloadRefresh);
     return {
@@ -159,5 +162,19 @@ export class AuthService {
         refreshToken: refreshToken,
       },
     };
+  }
+
+  async profile(user: UserWithPartialHiddenAttributes) {
+
+    delete user.hash;
+
+    user.email = hideEmail(user.email);
+
+    return {
+      statusCode: HttpStatus.OK,
+      data: {
+        user: user,
+      },
+    }
   }
 }

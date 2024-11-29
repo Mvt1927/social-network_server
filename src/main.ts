@@ -29,6 +29,7 @@ async function bootstrap() {
     .setTitle('Social Network API')
     .setDescription('The Social Network API description')
     .setVersion(SERVER_VERSION)
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

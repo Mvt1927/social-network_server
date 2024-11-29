@@ -1,20 +1,26 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiHeaders, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
 import { LoginAuthDto, RegisterAuthDto } from './dto/auth.dto';
+import { User } from '@prisma/client';
+import { JwtAccessGuard } from './guards/jwt-access/jwt-access.guard';
+import { GetUser } from 'src/users/decorators/get-user/get-user.decorator';
+import { UserHiddenAttributesType, UserWithoutHiddenAttributes } from 'src/users/types';
 
 type AuthResponse = any;
-
+// SWAGGER_DOCS:BEGINS
 @ApiTags('Authentication')
 @Controller('auth')
+// SWAGGER_DOCS:ENDS
 export class AuthController {
   constructor(private authService: AuthService) {}
   
@@ -42,5 +48,16 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
-  
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Get user profile' })
+  @ApiHeader({ name: 'Authorization', description: 'Bearer token' })
+  @ApiBearerAuth()
+  // SWAGGER_DOCS:ENDS
+
+  @HttpCode(HttpStatus.OK)
+  @Get('profile')
+  @UseGuards(JwtAccessGuard)
+  async profile(@GetUser() user: UserWithoutHiddenAttributes ): Promise<any> {
+    return this.authService.profile(user);
+  }
 }
