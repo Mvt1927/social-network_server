@@ -20,11 +20,11 @@ export class JwtAccessStrategy extends PassportStrategy(
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: jwtService.jwtConfig.access.secret,
+      
     });
   }
 
   authenticate(req: Request, options?: any): void {
-    console.log('req', req.headers);
     super.authenticate(req, options);
   }
 
@@ -48,6 +48,6 @@ export class JwtAccessStrategy extends PassportStrategy(
       });
     }
 
-    return user;
+    return {user, tokenPayload: payload};
   }
 }

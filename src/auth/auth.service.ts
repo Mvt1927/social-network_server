@@ -1,4 +1,9 @@
-import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import argon2 from 'argon2';
 
@@ -10,6 +15,9 @@ import {
 import { forEach } from 'lodash';
 import { JwtService } from 'src/jwt/jwt.service';
 import { hideEmail } from 'src/users/utils';
+import { TokenBlacklistService } from 'src/blacklist/token-blacklist/token-blacklist.service';
+import { LogoutDto } from './dto/logout.dto';
+import { ref } from 'joi';
 
 type AuthResponse = any;
 
@@ -18,6 +26,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private tokenBlacklistService: TokenBlacklistService,
   ) {}
 
   async signin(dto: LoginAuthDto): Promise<AuthResponse> {
@@ -137,17 +146,17 @@ export class AuthService {
           id: id,
           username: username,
           fullname: fullname,
-        }
-      }
-    }
+        },
+      },
+    };
 
     const payloadRefresh = {
       sub: {
         user: {
           id: id,
-        }
-      }
-    }
+        },
+      },
+    };
 
     userWithoutHash.email = hideEmail(userWithoutHash.email);
 
@@ -175,6 +184,52 @@ export class AuthService {
       data: {
         user: user,
       },
+    };
+  }
+
+  async refresh(user: UserWithPartialHiddenAttributes) {
+    delete user.hash;
+
+    user.email = hideEmail(user.email);
+
+    return this.returnAuthResponse(user);
+  }
+
+  async logout(
+    token: string,
+    tokenPayload: { exp: number },
+    logoutDto: LogoutDto,
+  ): Promise<any> {
+    try {
+      const payload = await this.jwtService.verifyRefreshToken(
+        logoutDto.refreshToken,
+      );
+      const expiresIn = payload.exp - Math.floor(Date.now() / 1000);
+      await this.tokenBlacklistService.addTokenToBlacklist(
+        logoutDto.refreshToken,
+        expiresIn,
+      );
+    } catch (error) {
+      throw new UnauthorizedException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: 'Invalid token',
+      });
     }
+
+    const expiresIn = (tokenPayload.exp - Math.floor(Date.now() / 1000) ) * 1000;
+    await this.tokenBlacklistService.addTokenToBlacklist(token, expiresIn);
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'User has been successfully logged out',
+      token: await this.tokenBlacklistService.isTokenBlacklisted(token),
+      refreshToken: await this.tokenBlacklistService.isTokenBlacklisted(
+        logoutDto.refreshToken,
+      ),
+    };
+  }
+
+  async test(token: string): Promise<any> {
+    return await this.tokenBlacklistService.isTokenBlacklisted(token);
   }
 }

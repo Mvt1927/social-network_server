@@ -29,7 +29,11 @@ async function bootstrap() {
     .setTitle('Social Network API')
     .setDescription('The Social Network API description')
     .setVersion(SERVER_VERSION)
-    .addBearerAuth()
+    .addBearerAuth({ type: 'http', scheme: 'bearer', }, 'Base Token')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', }, 'Access Token')
+    .addBearerAuth({ type: 'http', scheme: 'bearer'}, 'Refresh Token')
+    .addBearerAuth({ type: 'http', scheme: 'bearer'}, 'Confirmation Token')
+    .addBearerAuth({ type: 'http', scheme: 'bearer'}, 'Reset Password Token')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

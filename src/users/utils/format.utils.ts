@@ -19,7 +19,7 @@ export function formatFieldsWithName<T extends object>(
 
 export function hideEmail(email: string): string {
   if (!email) return "";
-  if (!validator.isEmail(email)) return "";
+  if (!validator.isEmail(email)) return email;
 
   const [name, domain] = email.split('@');
 

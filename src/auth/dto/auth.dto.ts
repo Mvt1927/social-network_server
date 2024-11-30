@@ -1,6 +1,5 @@
 import {
   IsEmail,
-  IsEnum,
   IsNotEmpty,
   IsString,
   Matches,
@@ -10,7 +9,18 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { PASSWORD_ERROR_MESSAGE, PASSWORD_REGEX, USERNAME_ERROR_MESSAGE, USERNAME_REGEX } from '../constants';
 
-export class PasswordDto {
+export class UsernameAuthDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  @Matches(
+    USERNAME_REGEX,
+    { message: 'Username'+ USERNAME_ERROR_MESSAGE },
+  )
+  username: string;
+}
+
+export class LoginAuthDto extends UsernameAuthDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
@@ -21,16 +31,6 @@ export class PasswordDto {
   password: string;
 }
 
-export class LoginAuthDto extends PasswordDto {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  @Matches(
-    USERNAME_REGEX,
-    { message: 'Username'+ USERNAME_ERROR_MESSAGE },
-  )
-  username: string;
-}
 
 export class RegisterAuthDto extends LoginAuthDto {
   @ApiProperty()
