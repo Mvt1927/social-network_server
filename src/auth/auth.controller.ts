@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Req,
   UseGuards,
@@ -17,6 +18,10 @@ import { UserWithoutHiddenAttributes } from 'src/users/types';
 import { GetTokenPayload } from 'src/jwt/decorators/get-token-payload/get-token-payload.decorator';
 import { GetToken } from 'src/jwt/decorators/get-token/get-token.decorator';
 import { LogoutDto } from './dto/logout.dto';
+import { JwtConfirmGuard } from './guards/jwt-confirm/jwt-confirm.guard';
+import { email } from '@snaplet/copycat/dist/email';
+import { VerifyEmailGuard } from 'src/verification/guards/verify-email/verify-email.guard';
+import { User } from '@prisma/client';
 
 type AuthResponse = any;
 // SWAGGER_DOCS:BEGINS
@@ -53,7 +58,7 @@ export class AuthController {
   // SWAGGER_DOCS:ENDS
   @HttpCode(HttpStatus.OK)
   @Get('profile')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, VerifyEmailGuard)
   async profile(@GetUser() user: UserWithoutHiddenAttributes): Promise<any> {
     return this.authService.profile(user);
   }
@@ -73,9 +78,24 @@ export class AuthController {
     return this.authService.logout(token, tokenPayload, logoutDto);
   }
 
-  // @HttpCode(HttpStatus.OK)
-  // @Post('test')
-  // async test(@Body() logoutDto: LogoutDto): Promise<any> {
-  //   return this.authService.test(logoutDto.refreshToken);
-  // }
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('test')
+  async test(@GetUser() user: User): Promise<any> {
+    return this.authService.sendVerificationEmail(user);
+  }
+  
+  @UseGuards(JwtConfirmGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('verify')
+  async verifyWithToken(@GetUser() user: UserWithoutHiddenAttributes, @GetTokenPayload() tokenPayload: any): Promise<any> {
+    return this.authService.verifyWithToken(user, tokenPayload);
+  }
+
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('verify/:code')
+  async verifyWithCode(@GetUser() user: UserWithoutHiddenAttributes, @Param('code') code: string): Promise<any> {
+    return this.authService.verifyWithCode(user, code);
+  }
 }

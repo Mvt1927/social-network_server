@@ -13,12 +13,25 @@ const main = async () => {
   // Truncate all tables in the database
   await seed.$resetDatabase();
 
+  await seed.user((x) =>
+    x(1, {
+      id: ({ seed }) => copycat.uuid(seed),
+      username: () => 'admin',
+      fullname: () => 'Admin',
+      hash: async () => {
+        return await argon2.hash('admin');
+      },
+      email: () => 'admin@mvt1927.me',
+    }),
+  );
+
   const defaultPassword = 'password';
   // Seed the database with 10 user
   await seed.user((x) =>
     x(10, {
       id: ({ seed }) => copycat.uuid(seed),
       username: ({ seed }) => copycat.username(seed),
+      fullname: ({ seed }) => copycat.fullName(seed),
       email: ({ seed }) => copycat.email(seed),
       hash: async () => {
         return await argon2.hash(defaultPassword);

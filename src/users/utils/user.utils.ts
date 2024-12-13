@@ -10,4 +10,6 @@ export const test: UserWithPartialHiddenAttributes = {
   createAt: new Date(),
   updateAt: new Date(),
   fullname: 'test',
+  isVerified: true,
+  roles: [],
 }

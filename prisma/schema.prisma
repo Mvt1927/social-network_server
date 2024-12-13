@@ -16,34 +16,299 @@ datasource db {
 }
 
 model User {
-  id       String    @id @default(uuid())
-  username String @unique
-
-  // begin hidden //
-  hash String
-  // salt String?
-  // end hidden //
-
-  email     String?  @unique
- 
-  fullname  String? 
+  id                    String         @id @default(cuid())
+  username              String         @unique
+  hash                  String
+  email                 String?        @unique
+  fullname              String?
+  avatarUrl             String?
+  bio                   String?
+  isVerified            Boolean        @default(false)
+  posts                 Post[]         @relation(name: "Post.AuthorToUser")
+  comments              Comment[]      @relation(name: "Comment.AuthorToUser")
+  roles                 Role[]         @default([GUEST])
+  userFriends           Friend[]       @relation(name: "Friend.UserToUser")
+  friendUserFriends     Friend[]       @relation(name: "Friend.FriendToUser")
+  chatAuthor            Chat[]         @relation(name: "Chat.AuthorToUser")
+  chatReceiver          Chat[]         @relation(name: "Chat.ReciverToUser")
+  groupMembers          GroupMember[]  @relation(name: "GroupMember.MemberToUser")
+  groupAuthor           Group[]        @relation(name: "Group.AuthorToUser")
+  groupChat             GroupChat[]    @relation(name: "GroupChat.AuthorToUser")
+  reactions             Reaction[]     @relation(name: "Reaction.AuthorToUser")
+  receivedNotifications Notification[] @relation(name: "Notification.RecipientToUser")
+  issuedNotifications   Notification[] @relation(name: "Notification.IssuerToUser")
+  following             Follow[]       @relation(name: "Follow.FollowerToUser")
+  followers             Follow[]       @relation(name: "Follow.FollowingToUser")
+  sessions              Session[]      @relation(name: "Session.UserToUser")
+  bookmarks             Bookmark[]     @relation(name: "Bookmark.UserToUser")
 
   createAt DateTime @default(now())
   updateAt DateTime @updatedAt
-  
-  Post     Post[]
 
   @@map("users")
 }
 
-model Post {
-  id        String     @id @default(uuid())
-  title     String
-  content   String
-  published Boolean
-  user      User    @relation(fields: [userId], references: [id])
+model Session {
+  id        String   @id @default(cuid())
   userId    String
+  expiresAt DateTime
+  user      User     @relation(name: "Session.UserToUser", fields: [userId], references: [id], onDelete: Cascade)
 
   createAt DateTime @default(now())
   updateAt DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model Bookmark {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(name: "Bookmark.UserToUser", fields: [userId], references: [id], onDelete: Cascade)
+  postId String
+  post   Post   @relation(name: "Bookmark.PostToPost", fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, postId])
+  @@map("bookmarks")
+}
+
+
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String
+  follower    User   @relation(name: "Follow.FollowerToUser", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User   @relation(name: "Follow.FollowingToUser", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Friend {
+  id                  String         @id @default(cuid())
+  user_id             String
+  user                User           @relation(name: "Friend.UserToUser", fields: [user_id], references: [id], onDelete: Cascade)
+  friend_id           String
+  friend              User           @relation(name: "Friend.FriendToUser", fields: [friend_id], references: [id], onDelete: Cascade)
+  status              Boolean        @default(true)
+  linkedNotifications Notification[] @relation(name: "Notification.FriendToFriend")
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@unique([user_id, friend_id])
+  @@unique([friend_id, user_id])
+  @@map("friends")
+}
+
+model Post {
+  id                  String         @id @default(cuid())
+  title               String
+  messageId           String?
+  message             Message?       @relation(name: "Post.MessageToMessage", fields: [messageId], references: [id])
+  linkedNotifications Notification[] @relation(name: "Notification.PostToPost")
+  published           Boolean
+  authorId            String
+  author              User           @relation(name: "Post.AuthorToUser", fields: [authorId], references: [id], onDelete: Cascade)
+  comments            Comment[]      @relation(name: "Comment.PostToPost")
+  reaction            Reaction[]
+  bookmarks           Bookmark[]     @relation(name: "Bookmark.PostToPost")
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("posts")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  recipientId String
+  recipient   User             @relation(name: "Notification.RecipientToUser", fields: [recipientId], references: [id], onDelete: Cascade)
+  issuerId    String
+  issuer      User             @relation(name: "Notification.IssuerToUser", fields: [issuerId], references: [id], onDelete: Cascade)
+  postId      String?
+  post        Post?            @relation(name: "Notification.PostToPost", fields: [postId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  read        Boolean          @default(false)
+  friendId    String?
+  friend      Friend?          @relation(name: "Notification.FriendToFriend", fields: [friendId], references: [id], onDelete: Cascade)
+  commentId   String?
+  comment     Comment?         @relation(name: "Notification.CommentToComment", fields: [commentId], references: [id], onDelete: Cascade)
+  groupChatId String?
+  groupChat   GroupChat?       @relation(name: "Notification.GroupChatToGroupChat", fields: [groupChatId], references: [id], onDelete: Cascade)
+  chatId      String?
+  chat        Chat?            @relation(name: "Notification.ChatToChat", fields: [chatId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notifications")
+}
+
+model Comment {
+  id                  String         @id @default(uuid())
+  messageId           String
+  message             Message        @relation(name: "Comment.MessageToMessage", fields: [messageId], references: [id], onDelete: Cascade)
+  published           Boolean
+  postId              String
+  post                Post           @relation(name: "Comment.PostToPost", fields: [postId], references: [id], onDelete: Cascade)
+  authorId            String
+  author              User           @relation(name: "Comment.AuthorToUser", fields: [authorId], references: [id], onDelete: Cascade)
+  replyCommentId      String?
+  replyComment        Comment?       @relation(name: "Comment.ReplyCommentsToComment", fields: [replyCommentId], references: [id], onDelete: NoAction)
+  replyComments       Comment[]      @relation(name: "Comment.ReplyCommentsToComment")
+  reaction            Reaction[]     @relation(name: "Reaction.CommentToComment")
+  linkedNotifications Notification[] @relation(name: "Notification.CommentToComment")
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("comments")
+}
+
+model Message {
+  id          String      @id @default(uuid())
+  content     String?
+  attachments Media[]
+  chats       Chat[]      @relation(name: "Chat.MessageToMessage")
+  groupChats  GroupChat[] @relation(name: "GroupChat.MessageToMessage")
+  comments    Comment[]   @relation(name: "Comment.MessageToMessage")
+  posts       Post[]      @relation(name: "Post.MessageToMessage")
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("messages")
+}
+
+model Chat {
+  id                  String         @id @default(uuid())
+  authorId            String
+  author              User           @relation(name: "Chat.AuthorToUser", fields: [authorId], references: [id], onDelete: Cascade)
+  receiverId          String
+  receiver            User           @relation(name: "Chat.ReciverToUser", fields: [receiverId], references: [id], onDelete: NoAction)
+  messageId           String
+  message             Message        @relation(name: "Chat.MessageToMessage", fields: [messageId], references: [id], onDelete: NoAction)
+  reaction            Reaction[]     @relation(name: "Reaction.ChatToChat")
+  linkedNotifications Notification[] @relation(name: "Notification.ChatToChat")
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("chats")
+}
+
+model Group {
+  id           String        @id @default(uuid())
+  name         String
+  authorId     String?
+  author       User?         @relation(name: "Group.AuthorToUser", fields: [authorId], references: [id], onDelete: SetNull)
+  groupMembers GroupMember[] @relation(name: "GroupMember.GroupToGroup")
+  groupChats   GroupChat[]   @relation(name: "GroupChat.GroupToGroup")
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id        String @id @default(uuid())
+  groupId   String
+  group     Group  @relation(name: "GroupMember.GroupToGroup", fields: [groupId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    User   @relation(name: "GroupMember.MemberToUser", fields: [memberId], references: [id], onDelete: Cascade)
+  groupRole Role[] @default([GUEST])
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("GroupMembers")
+}
+
+model GroupChat {
+  id                  String         @id @default(uuid())
+  groupId             String
+  group               Group          @relation(name: "GroupChat.GroupToGroup", fields: [groupId], references: [id], onDelete: Cascade)
+  authorId            String
+  author              User           @relation(name: "GroupChat.AuthorToUser", fields: [authorId], references: [id], onDelete: Cascade)
+  messageId           String
+  message             Message        @relation(name: "GroupChat.MessageToMessage", fields: [messageId], references: [id], onDelete: Cascade)
+  linkedNotifications Notification[] @relation(name: "Notification.GroupChatToGroupChat")
+  reactions           Reaction[]     @relation(name: "Reaction.GroupChatToGroupChat")
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+}
+
+model Media {
+  id        String     @id @default(cuid())
+  url       String?
+  type      MediaType?
+  messageId String?
+  message   Message?   @relation(fields: [messageId], references: [id])
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("medias")
+}
+
+model Reaction {
+  id          String       @id @default(uuid())
+  type        ReactionType
+  authorId    String
+  author      User         @relation(name: "Reaction.AuthorToUser", fields: [authorId], references: [id])
+  postId      String?
+  post        Post?        @relation(fields: [postId], references: [id])
+  commentId   String?
+  comment     Comment?     @relation(name: "Reaction.CommentToComment", fields: [commentId], references: [id])
+  chatId      String?
+  chat        Chat?        @relation(name: "Reaction.ChatToChat", fields: [chatId], references: [id])
+  groupChatId String?
+  groupChat   GroupChat?   @relation(name: "Reaction.GroupChatToGroupChat", fields: [groupChatId], references: [id])
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("reactions")
+}
+
+enum Role {
+  USER
+  ADMIN
+  GUEST
+  MODERATOR
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  OTHER
+}
+
+enum NotificationType {
+  REACTION
+  FRIEND_REQUEST
+  FOLLOW
+  COMMENT
+  GROUP_CHAT_SEND_MESSAGE
+  CHAT_SEND_MESSAGE
+  COMMENT_REPLY
 }

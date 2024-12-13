@@ -10,6 +10,7 @@ import argon2 from 'argon2';
 import { RegisterAuthDto, LoginAuthDto } from './dto/auth.dto';
 import {
   UserHiddenAttributesType,
+  UserWithoutHiddenAttributes,
   UserWithPartialHiddenAttributes,
 } from 'src/users/types';
 import { forEach } from 'lodash';
@@ -18,6 +19,13 @@ import { hideEmail } from 'src/users/utils';
 import { TokenBlacklistService } from 'src/blacklist/token-blacklist/token-blacklist.service';
 import { LogoutDto } from './dto/logout.dto';
 import { ref } from 'joi';
+import { VerificationService } from 'src/verification/verification.service';
+import { readFileSync } from 'fs';
+import Handlebars from 'handlebars';
+import { time } from 'console';
+import { EmailService } from 'src/email/email.service';
+import e from 'express';
+import { User } from '@prisma/client';
 
 type AuthResponse = any;
 
@@ -27,6 +35,8 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private tokenBlacklistService: TokenBlacklistService,
+    private verifyService: VerificationService,
+    private emailService: EmailService,
   ) {}
 
   async signin(dto: LoginAuthDto): Promise<AuthResponse> {
@@ -123,7 +133,7 @@ export class AuthService {
       },
     });
 
-    return this.returnAuthResponse(user);
+    return await this.sendVerificationEmail(user);
   }
 
   async hashPassword(password: string): Promise<UserHiddenAttributesType> {
@@ -141,20 +151,16 @@ export class AuthService {
     const { id, username, fullname } = userWithoutHash;
 
     const payloadAccess = {
-      sub: {
-        user: {
-          id: id,
-          username: username,
-          fullname: fullname,
-        },
+      user: {
+        id: id,
+        username: username,
+        fullname: fullname,
       },
     };
 
     const payloadRefresh = {
-      sub: {
-        user: {
-          id: id,
-        },
+      user: {
+        id: id,
       },
     };
 
@@ -174,7 +180,6 @@ export class AuthService {
   }
 
   async profile(user: UserWithPartialHiddenAttributes) {
-
     delete user.hash;
 
     user.email = hideEmail(user.email);
@@ -216,7 +221,7 @@ export class AuthService {
       });
     }
 
-    const expiresIn = (tokenPayload.exp - Math.floor(Date.now() / 1000) ) * 1000;
+    const expiresIn = (tokenPayload.exp - Math.floor(Date.now() / 1000)) * 1000;
     await this.tokenBlacklistService.addTokenToBlacklist(token, expiresIn);
 
     return {
@@ -231,5 +236,68 @@ export class AuthService {
 
   async test(token: string): Promise<any> {
     return await this.tokenBlacklistService.isTokenBlacklisted(token);
+  }
+
+  async sendVerificationEmail(user: User) {
+    const { token, verificationCode } =
+      await this.verifyService.generateVerificationToken(user);
+
+    const templatePath = 'src/email/templates/welcome.hbs'; // Đường dẫn đến template
+    const templateContent = readFileSync(templatePath, 'utf-8');
+    const template = Handlebars.compile(templateContent);
+
+    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    const html = template({
+      name: user.username,
+      verificationLink,
+      verificationCode,
+      time: '1 giờ',
+    }); // Thay thế các biến trong template
+
+    const subject = 'Welcome to our platform';
+
+
+    this.emailService.sendMail(user.email, subject, '', html);
+
+    return this.returnAuthResponse(user);
+  }
+
+  async verifyWithToken(
+    user: UserWithoutHiddenAttributes,
+    tokenPayload: any,
+  ): Promise<any> {
+    let code = null;
+
+    if (
+      !tokenPayload ||
+      !tokenPayload.sub ||
+      !tokenPayload.sub.verificationCode ||
+      tokenPayload.sub.user.id !== user.id ||
+      !this.verifyService.verifyEmail(user, tokenPayload.sub.verificationCode)
+    ) {
+      throw new UnauthorizedException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: 'Invalid token',
+      });
+    }
+
+    return this.verifyWithCode(user, code);
+  }
+
+  async verifyWithCode(user: UserWithoutHiddenAttributes, code: string) {
+
+    const verified = await this.verifyService.verifyEmail(user, code);
+
+    if (!verified) {
+      throw new UnauthorizedException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: 'Invalid code',
+      });
+    }
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Email has been successfully verified',
+    };
   }
 }

@@ -6,6 +6,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from 'src/jwt/jwt.module';
 import { JwtAccessStrategy } from './strategies/jwt-access/jwt-access.strategy';
 import { TokenBlacklistModule } from 'src/blacklist/token-blacklist/token-blacklist.module';
+import { VerificationModule } from 'src/verification/verification.module';
+import { EmailModule } from 'src/email/email.module';
+import { JwtConfirmStrategy } from './strategies/jwt-confirm/jwt-confirm.strategy';
 
 @Module({
   imports: [
@@ -13,8 +16,10 @@ import { TokenBlacklistModule } from 'src/blacklist/token-blacklist/token-blackl
     PassportModule,
     JwtModule,
     TokenBlacklistModule,
+    VerificationModule,
+    EmailModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAccessStrategy],
+  providers: [AuthService, JwtAccessStrategy, JwtConfirmStrategy],
 })
 export class AuthModule {}

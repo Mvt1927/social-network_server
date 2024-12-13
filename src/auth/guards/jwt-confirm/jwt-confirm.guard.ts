@@ -1,15 +1,10 @@
-import {
-  ExecutionContext,
-  HttpCode,
-  HttpStatus,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ExtractJwt } from 'passport-jwt';
+import { Observable } from 'rxjs';
 
 @Injectable()
-export class JwtAccessGuard extends AuthGuard('jwt-access') {
+export class JwtConfirmGuard extends AuthGuard('jwt-confirm') {
   constructor() {
     super({
       property: 'data',

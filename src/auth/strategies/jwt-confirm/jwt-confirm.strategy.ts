@@ -8,9 +8,9 @@ import { JwtService } from 'src/jwt/jwt.service';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
-export class JwtAccessStrategy extends PassportStrategy(
+export class JwtConfirmStrategy extends PassportStrategy(
   Strategy,
-  'jwt-access',
+  'jwt-confirm',
 ) {
   constructor(
     private readonly jwtService: JwtService,
@@ -19,8 +19,7 @@ export class JwtAccessStrategy extends PassportStrategy(
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: jwtService.jwtConfig.access.secret,
-      
+      secretOrKey: jwtService.jwtConfig.confirmation.secret,
     });
   }
 
@@ -30,7 +29,6 @@ export class JwtAccessStrategy extends PassportStrategy(
 
   async validate(payload: any) {
     // console.log('payload', payload);
-    
     if (!payload || !payload.sub || !payload.sub.user) {
       throw new UnauthorizedException({
         message: 'Invalid token',
@@ -38,7 +36,6 @@ export class JwtAccessStrategy extends PassportStrategy(
       });
     }
     const { id } = payload.sub.user;
-
     const user = await this.userService.findOneWithId(id);
     if (!user) {
       throw new UnauthorizedException({
@@ -47,6 +44,6 @@ export class JwtAccessStrategy extends PassportStrategy(
       });
     }
 
-    return {user, tokenPayload: payload};
+    return { user, tokenPayload: payload };
   }
 }

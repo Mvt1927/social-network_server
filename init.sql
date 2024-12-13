@@ -1,0 +1,7 @@
+-- -- init.sql
+-- CREATE OR REPLACE FUNCTION uuid(prefix TEXT = "")
+-- RETURNS TEXT AS $$
+-- BEGIN
+--   RETURN prefix || gen_random_uuid()::text;
+-- END;
+-- $$ LANGUAGE plpgsql;
