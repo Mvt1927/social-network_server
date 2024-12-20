@@ -22,6 +22,7 @@ import { JwtConfirmGuard } from './guards/jwt-confirm/jwt-confirm.guard';
 import { email } from '@snaplet/copycat/dist/email';
 import { VerifyEmailGuard } from 'src/verification/guards/verify-email/verify-email.guard';
 import { User } from '@prisma/client';
+import { JwtRefreshGuard } from './guards/jwt-refresh/jwt-refresh.guard';
 
 type AuthResponse = any;
 // SWAGGER_DOCS:BEGINS
@@ -39,6 +40,17 @@ export class AuthController {
   @Post('signin')
   async signin(@Body() dto: LoginAuthDto): Promise<AuthResponse> {
     return this.authService.signin(dto);
+  }
+
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiBearerAuth('Refresh Token')
+  // SWAGGER_DOCS:ENDS
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtRefreshGuard)
+  @Get('signin/refresh')
+  async refresh(@GetUser() user: User,  @GetToken() token: string): Promise<AuthResponse> {
+    return this.authService.refresh(user, token);
   }
 
   // SWAGGER_DOCS:BEGINS
@@ -71,11 +83,10 @@ export class AuthController {
   @UseGuards(JwtAccessGuard)
   @Post('logout')
   async logout(
-    @GetTokenPayload() tokenPayload: any,
     @GetToken() token: string,
     @Body() logoutDto: LogoutDto,
   ): Promise<any> {
-    return this.authService.logout(token, tokenPayload, logoutDto);
+    return this.authService.logout(token, logoutDto);
   }
 
   @UseGuards(JwtAccessGuard)
@@ -85,6 +96,11 @@ export class AuthController {
     return this.authService.sendVerificationEmail(user);
   }
   
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Verify email with token' })
+  @ApiBearerAuth('Confirmation Token')
+  // SWAGGER_DOCS:ENDS
+
   @UseGuards(JwtConfirmGuard)
   @HttpCode(HttpStatus.OK)
   @Post('verify')
@@ -92,6 +108,10 @@ export class AuthController {
     return this.authService.verifyWithToken(user, tokenPayload);
   }
 
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Verify email with code' })
+  @ApiBearerAuth('Access Token')
+  // SWAGGER_DOCS:ENDS
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.OK)
   @Post('verify/:code')

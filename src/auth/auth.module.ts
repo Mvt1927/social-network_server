@@ -9,6 +9,7 @@ import { TokenBlacklistModule } from 'src/blacklist/token-blacklist/token-blackl
 import { VerificationModule } from 'src/verification/verification.module';
 import { EmailModule } from 'src/email/email.module';
 import { JwtConfirmStrategy } from './strategies/jwt-confirm/jwt-confirm.strategy';
+import { JwtRefreshStrategy } from './strategies/jwt-refresh/jwt-refresh.strategy';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { JwtConfirmStrategy } from './strategies/jwt-confirm/jwt-confirm.strateg
     EmailModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAccessStrategy, JwtConfirmStrategy],
+  providers: [AuthService],
 })
 export class AuthModule {}

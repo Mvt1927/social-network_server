@@ -7,11 +7,12 @@
 import { createSeedClient } from '@snaplet/seed';
 import { copycat } from '@snaplet/copycat';
 import * as argon2 from 'argon2';
+import { Role } from '@prisma/client';
 const main = async () => {
   const seed = await createSeedClient();
 
   // Truncate all tables in the database
-  await seed.$resetDatabase();
+  // await seed.$resetDatabase();
 
   await seed.user((x) =>
     x(1, {
@@ -22,6 +23,7 @@ const main = async () => {
         return await argon2.hash('admin');
       },
       email: () => 'admin@mvt1927.me',
+      roles: () => [Role.ADMIN],
     }),
   );
 

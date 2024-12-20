@@ -50,7 +50,7 @@ export class VerificationService {
       `${this.VERIFICATION}:${user.id}:${user.email}`,
     );
 
-    console.log(cachedVerificationCode)
+    console.log("cachedVerificationCode: ",cachedVerificationCode)
     if (!cachedVerificationCode) {
       return false;
     }

@@ -108,9 +108,8 @@ model Friend {
 
 model Post {
   id                  String         @id @default(cuid())
-  title               String
-  messageId           String?
-  message             Message?       @relation(name: "Post.MessageToMessage", fields: [messageId], references: [id])
+  messageId           String
+  message             Message       @relation(name: "Post.MessageToMessage", fields: [messageId], references: [id], onDelete: Cascade)
   linkedNotifications Notification[] @relation(name: "Notification.PostToPost")
   published           Boolean
   authorId            String
@@ -191,9 +190,9 @@ model Chat {
   authorId            String
   author              User           @relation(name: "Chat.AuthorToUser", fields: [authorId], references: [id], onDelete: Cascade)
   receiverId          String
-  receiver            User           @relation(name: "Chat.ReciverToUser", fields: [receiverId], references: [id], onDelete: NoAction)
+  receiver            User           @relation(name: "Chat.ReciverToUser", fields: [receiverId], references: [id], onDelete: Cascade)
   messageId           String
-  message             Message        @relation(name: "Chat.MessageToMessage", fields: [messageId], references: [id], onDelete: NoAction)
+  message             Message        @relation(name: "Chat.MessageToMessage", fields: [messageId], references: [id], onDelete: Cascade)
   reaction            Reaction[]     @relation(name: "Reaction.ChatToChat")
   linkedNotifications Notification[] @relation(name: "Notification.ChatToChat")
 
@@ -251,7 +250,7 @@ model Media {
   url       String?
   type      MediaType?
   messageId String?
-  message   Message?   @relation(fields: [messageId], references: [id])
+  message   Message?   @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   createAt DateTime @default(now())
   updateAt DateTime @updatedAt

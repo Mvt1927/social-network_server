@@ -26,6 +26,7 @@ import { time } from 'console';
 import { EmailService } from 'src/email/email.service';
 import e from 'express';
 import { User } from '@prisma/client';
+import { getProfileUserDataSelect } from 'src/users/entities/user.entities';
 
 type AuthResponse = any;
 
@@ -144,6 +145,7 @@ export class AuthService {
 
   async returnAuthResponse(
     user: UserWithPartialHiddenAttributes,
+    refresh = false,
   ): Promise<AuthResponse> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { hash, ...userWithoutHash } = user;
@@ -167,42 +169,49 @@ export class AuthService {
     userWithoutHash.email = hideEmail(userWithoutHash.email);
 
     const accessToken = await this.jwtService.signAccessToken(payloadAccess);
-    const refreshToken = await this.jwtService.signRefreshToken(payloadRefresh);
+    const refreshToken = !refresh
+      ? await this.jwtService.signRefreshToken(payloadRefresh)
+      : undefined;
     return {
       statusCode: HttpStatus.OK,
       message: 'User has been successfully authenticated',
-      data: {
-        user: userWithoutHash,
-        token: accessToken,
-        refreshToken: refreshToken,
-      },
+      data: !refresh
+        ? {
+            user: userWithoutHash,
+            token: accessToken,
+            refreshToken: refreshToken,
+          }
+        : {
+            token: accessToken,
+          },
     };
   }
 
   async profile(user: UserWithPartialHiddenAttributes) {
-    delete user.hash;
+    const userProfile = await this.usersService.findOneWithId(
+      user.id,
+      getProfileUserDataSelect(),
+    );
 
-    user.email = hideEmail(user.email);
+    delete userProfile.hash;
+
+    userProfile.email = hideEmail(user.email);
 
     return {
       statusCode: HttpStatus.OK,
       data: {
-        user: user,
+        user: userProfile,
       },
     };
   }
 
-  async refresh(user: UserWithPartialHiddenAttributes) {
-    delete user.hash;
-
-    user.email = hideEmail(user.email);
-
-    return this.returnAuthResponse(user);
+  async refresh(user: UserWithPartialHiddenAttributes, accessToken: string) {
+    this.tokenBlacklistService.addTokenToBlacklist(accessToken, Date.now() + (this.jwtService.jwtConfig.access.time * 1000));
+    return this.returnAuthResponse(user, true);
   }
 
   async logout(
     token: string,
-    tokenPayload: { exp: number },
     logoutDto: LogoutDto,
   ): Promise<any> {
     try {
@@ -221,8 +230,7 @@ export class AuthService {
       });
     }
 
-    const expiresIn = (tokenPayload.exp - Math.floor(Date.now() / 1000)) * 1000;
-    await this.tokenBlacklistService.addTokenToBlacklist(token, expiresIn);
+    await this.tokenBlacklistService.addTokenToBlacklist(token, Date.now() + (this.jwtService.jwtConfig.access.time * 1000));
 
     return {
       statusCode: HttpStatus.OK,
@@ -256,7 +264,6 @@ export class AuthService {
 
     const subject = 'Welcome to our platform';
 
-
     this.emailService.sendMail(user.email, subject, '', html);
 
     return this.returnAuthResponse(user);
@@ -285,7 +292,6 @@ export class AuthService {
   }
 
   async verifyWithCode(user: UserWithoutHiddenAttributes, code: string) {
-
     const verified = await this.verifyService.verifyEmail(user, code);
 
     if (!verified) {

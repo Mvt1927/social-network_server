@@ -8,11 +8,14 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 import { PASSWORD_ERROR_MESSAGE, PASSWORD_REGEX, USERNAME_ERROR_MESSAGE, USERNAME_REGEX } from '../constants';
+import { Transform } from 'class-transformer';
 
 export class UsernameAuthDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
+  @MinLength(8)
+  @Transform(({ value }) => value.toLowerCase())
   @Matches(
     USERNAME_REGEX,
     { message: 'Username'+ USERNAME_ERROR_MESSAGE },
@@ -37,5 +40,6 @@ export class RegisterAuthDto extends LoginAuthDto {
   @IsNotEmpty()
   @IsString()
   @IsEmail()
+  @Transform(({ value }) => value.toLowerCase())
   email: string;
 }

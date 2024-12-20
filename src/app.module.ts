@@ -15,6 +15,13 @@ import { CacheModule, CacheStore } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { VerifyEmailGuard } from './verification/guards/verify-email/verify-email.guard';
 import { RolesGuard } from './roles/guards/roles/roles.guard';
+import { JwtRefreshStrategy } from './auth/strategies/jwt-refresh/jwt-refresh.strategy';
+import { JwtConfirmStrategy } from './auth/strategies/jwt-confirm/jwt-confirm.strategy';
+import { JwtAccessStrategy } from './auth/strategies/jwt-access/jwt-access.strategy';
+import { JwtModule } from './jwt/jwt.module';
+import { MediaModule } from './media/media.module';
+import { PostModule } from './post/post.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
@@ -45,9 +52,13 @@ import { RolesGuard } from './roles/guards/roles/roles.guard';
     TokenBlacklistModule,
     VerificationModule,
     EmailModule,
+    JwtModule,
+    MediaModule,
+    PostModule,
+    MessageModule
   ],
   controllers: [AppController],
-  providers: [AppService, VerifyEmailGuard, RolesGuard],
+  providers: [AppService, VerifyEmailGuard, RolesGuard,  JwtAccessStrategy, JwtConfirmStrategy, JwtRefreshStrategy],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -15,6 +15,8 @@ async function bootstrap() {
   const PORT = config.get(ConfigNames.PORT) || 3000;
   const SERVER_VERSION = config.get(ConfigNames.VERSION) || '1';
 
+  app.enableCors();
+
   app.setGlobalPrefix(`api/v${extractVersionValue(SERVER_VERSION)}`);
   app.useGlobalPipes(
     new ValidationPipe({
