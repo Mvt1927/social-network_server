@@ -1,9 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { Roles } from 'src/roles/decorators/roles/roles.decorator';
+import { Role } from '@prisma/client';
+import { JwtAccessGuard } from 'src/auth/guards/jwt-access/jwt-access.guard';
+import { RolesGuard } from 'src/roles/guards/roles/roles.guard';
+import { ApiTags } from '@nestjs/swagger';
 
+@Roles(Role.ADMIN)
+@UseGuards(JwtAccessGuard, RolesGuard)
 @Controller('message')
+@ApiTags('Message')
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 

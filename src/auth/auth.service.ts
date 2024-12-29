@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
@@ -27,6 +28,10 @@ import { EmailService } from 'src/email/email.service';
 import e from 'express';
 import { User } from '@prisma/client';
 import { getProfileUserDataSelect } from 'src/users/entities/user.entities';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { RequestChangePasswordDto } from './dto/request-change-password.dto';
+import { formatDuration, intervalToDuration } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 type AuthResponse = any;
 
@@ -183,6 +188,7 @@ export class AuthService {
           }
         : {
             token: accessToken,
+            refreshToken: refreshToken,
           },
     };
   }
@@ -206,14 +212,14 @@ export class AuthService {
   }
 
   async refresh(user: UserWithPartialHiddenAttributes, accessToken: string) {
-    this.tokenBlacklistService.addTokenToBlacklist(accessToken, Date.now() + (this.jwtService.jwtConfig.access.time * 1000));
+    this.tokenBlacklistService.addTokenToBlacklist(
+      accessToken,
+      Date.now() + this.jwtService.jwtConfig.access.time * 1000,
+    );
     return this.returnAuthResponse(user, true);
   }
 
-  async logout(
-    token: string,
-    logoutDto: LogoutDto,
-  ): Promise<any> {
+  async logout(token: string, logoutDto: LogoutDto): Promise<any> {
     try {
       const payload = await this.jwtService.verifyRefreshToken(
         logoutDto.refreshToken,
@@ -230,7 +236,10 @@ export class AuthService {
       });
     }
 
-    await this.tokenBlacklistService.addTokenToBlacklist(token, Date.now() + (this.jwtService.jwtConfig.access.time * 1000));
+    await this.tokenBlacklistService.addTokenToBlacklist(
+      token,
+      Date.now() + this.jwtService.jwtConfig.access.time * 1000,
+    );
 
     return {
       statusCode: HttpStatus.OK,
@@ -246,6 +255,85 @@ export class AuthService {
     return await this.tokenBlacklistService.isTokenBlacklisted(token);
   }
 
+  requestVerify(user: User, email: string) {
+    if (user.email !== email) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Invalid email',
+      });
+    }
+
+    return this.sendVerificationEmail(user);
+  }
+
+  async resetPassword(user: User, token: string, dto: ChangePasswordDto) {
+    try {
+      this.tokenBlacklistService.addTokenToBlacklist(
+        token,
+        Date.now() + this.jwtService.jwtConfig.resetPassword.time * 1000,
+      );
+
+      return this.usersService.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          hash: await argon2.hash(dto.newPassword),
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException("Failed to reset user's password");
+    }
+  }
+
+  async requestResetPassword(user: User, dto: RequestChangePasswordDto) {
+    if (dto.email !== user.email) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Invalid email',
+      });
+    }
+
+    if (!(await argon2.verify(user.hash, dto.password))) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Invalid password',
+      });
+    }
+
+    const token = this.jwtService.signResetPasswordToken({
+      user: {
+        id: user.id,
+      },
+    });
+
+    const templatePath = 'src/email/templates/reset-password.hbs';
+    const templateContent = readFileSync(templatePath, 'utf-8');
+    const template = Handlebars.compile(templateContent);
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    const html = template({
+      name: user.username,
+      resetLink,
+      time: formatDuration(
+        intervalToDuration({
+          start: 0,
+          end: this.jwtService.jwtConfig.resetPassword.time * 1000,
+        }),
+        { locale: vi },
+      ),
+    });
+
+    const subject = 'Reset your password';
+
+    this.emailService.sendMail(user.email, subject, '', html);
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Reset password email has been sent',
+    };
+  }
+
   async sendVerificationEmail(user: User) {
     const { token, verificationCode } =
       await this.verifyService.generateVerificationToken(user);
@@ -259,7 +347,13 @@ export class AuthService {
       name: user.username,
       verificationLink,
       verificationCode,
-      time: '1 giờ',
+      time: formatDuration(
+        intervalToDuration({
+          start: 0,
+          end: this.jwtService.jwtConfig.confirmation.time * 1000,
+        }),
+        { locale: vi },
+      ),
     }); // Thay thế các biến trong template
 
     const subject = 'Welcome to our platform';

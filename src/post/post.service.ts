@@ -1,16 +1,21 @@
 import {
   ForbiddenException,
-  HttpException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
+  Type,
 } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { getPostDataInclude, getPostDataOmit } from './entities/post.entity';
+import {
+  getPostDataInclude,
+  getPostDataOmit,
+  postInclude,
+  PostType,
+} from './entities/post.entity';
 // import prune from 'json-prune';
-import * as _ from 'lodash';
 
 @Injectable()
 export class PostService {
@@ -50,25 +55,116 @@ export class PostService {
     return newPost;
   }
 
-  async findAll(cursor: string | undefined, query: string) {
-    const pageSize = 10;
+  async findAll(
+    user: User,
+    cursor: string | undefined,
+    pageSize: number,
+    postType: PostType,
+  ) {
+    try {
+      let postWhereInput: Prisma.PostWhereInput = {};
 
-    const posts = await this.prismaService.post.findMany({
-      include: getPostDataInclude(),
-      orderBy: { createAt: 'desc' },
-      omit: getPostDataOmit(),
-      cursor: cursor ? { id: cursor } : undefined,
-      take: pageSize + 1,
-    });
+      switch (postType) {
+        case PostType.BOOKMARK:
+          postWhereInput = {
+            bookmarks: {
+              some: {
+                userId: user.id,
+              },
+            },
+            published: true,
+          };
+        case PostType.FOR_YOU:
+          postWhereInput = {
+            published: true,
+          };
+        case PostType.ALL:
+          if (!user.roles.includes('ADMIN')) {
+            postWhereInput = {
+              published: true,
+            };
+          }
+        default:
+          postWhereInput = {
+            authorId: user.id,
+          };
+      }
 
-    const nextCursor =
-      posts.length > pageSize ? posts[posts.length - 1].id : null;
+      const posts = await this.prismaService.post.findMany({
+        where: { ...postWhereInput },
+        include: postInclude,
+        orderBy: { createAt: 'desc' },
+        omit: getPostDataOmit(),
+        cursor: cursor ? { id: cursor } : undefined,
+        take: pageSize + 1,
+      });
 
-    const data = {
-      posts: posts.slice(0, pageSize),
-      nextCursor,
-    };
-    return data;
+      const nextCursor =
+        posts.length > pageSize ? posts[posts.length - 1].id : null;
+
+      const data = {
+        posts: posts.slice(0, pageSize),
+        nextCursor,
+      };
+      return data;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to fetch posts');
+    }
+  }
+
+  async search(
+    user: User,
+    cursor: string | undefined,
+    pageSize: number,
+    q: string,
+  ) {
+    try {
+      const searchQuery = q.trim().toLowerCase().split(' ').join('&');
+
+      const posts = await this.prismaService.post.findMany({
+        where: {
+          OR: [
+            {
+              message: {
+                content: {
+                  search: searchQuery,
+                },
+              },
+            },
+            {
+              author: {
+                username: {
+                  search: searchQuery,
+                },
+              },
+            },
+            {
+              author: {
+                fullname: {
+                  search: searchQuery,
+                },
+              },
+            },
+          ],
+        },
+        include: postInclude,
+        orderBy: { createAt: 'desc' },
+        omit: getPostDataOmit(),
+        cursor: cursor ? { id: cursor } : undefined,
+        take: pageSize + 1,
+      });
+
+      const nextCursor =
+        posts.length > pageSize ? posts[posts.length - 1].id : null;
+
+      const data = {
+        posts: posts.slice(0, pageSize),
+        nextCursor,
+      };
+      return data;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to fetch posts');
+    }
   }
 
   findOne(id: string) {

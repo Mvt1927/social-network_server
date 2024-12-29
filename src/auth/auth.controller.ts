@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -19,10 +20,14 @@ import { GetTokenPayload } from 'src/jwt/decorators/get-token-payload/get-token-
 import { GetToken } from 'src/jwt/decorators/get-token/get-token.decorator';
 import { LogoutDto } from './dto/logout.dto';
 import { JwtConfirmGuard } from './guards/jwt-confirm/jwt-confirm.guard';
-import { email } from '@snaplet/copycat/dist/email';
 import { VerifyEmailGuard } from 'src/verification/guards/verify-email/verify-email.guard';
 import { User } from '@prisma/client';
 import { JwtRefreshGuard } from './guards/jwt-refresh/jwt-refresh.guard';
+import { RequestVerifyDto } from './dto/request-verify.dto';
+import { email } from '@snaplet/copycat/dist/email';
+import { RequestChangePasswordDto } from './dto/request-change-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtResetPasswordGuard } from './guards/jwt-reset-password/jwt-reset-password.guard';
 
 type AuthResponse = any;
 // SWAGGER_DOCS:BEGINS
@@ -49,7 +54,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtRefreshGuard)
   @Get('signin/refresh')
-  async refresh(@GetUser() user: User,  @GetToken() token: string): Promise<AuthResponse> {
+  async refresh(
+    @GetUser() user: User,
+    @GetToken() token: string,
+  ): Promise<AuthResponse> {
     return this.authService.refresh(user, token);
   }
 
@@ -89,22 +97,32 @@ export class AuthController {
     return this.authService.logout(token, logoutDto);
   }
 
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Request email verification' })
+  @ApiBearerAuth('Access Token')
+  @ApiBody({ type: RequestVerifyDto })
+  // SWAGGER_DOCS:ENDS
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.OK)
-  @Post('test')
-  async test(@GetUser() user: User): Promise<any> {
-    return this.authService.sendVerificationEmail(user);
+  @Post('request-verify')
+  async test(
+    @GetUser() user: User,
+    @Body() requestVerifyDto: RequestVerifyDto,
+  ): Promise<any> {
+    return this.authService.requestVerify(user, requestVerifyDto.email);
   }
-  
+
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Verify email with token' })
   @ApiBearerAuth('Confirmation Token')
   // SWAGGER_DOCS:ENDS
-
   @UseGuards(JwtConfirmGuard)
   @HttpCode(HttpStatus.OK)
   @Post('verify')
-  async verifyWithToken(@GetUser() user: UserWithoutHiddenAttributes, @GetTokenPayload() tokenPayload: any): Promise<any> {
+  async verifyWithToken(
+    @GetUser() user: UserWithoutHiddenAttributes,
+    @GetTokenPayload() tokenPayload: any,
+  ): Promise<any> {
     return this.authService.verifyWithToken(user, tokenPayload);
   }
 
@@ -115,7 +133,38 @@ export class AuthController {
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.OK)
   @Post('verify/:code')
-  async verifyWithCode(@GetUser() user: UserWithoutHiddenAttributes, @Param('code') code: string): Promise<any> {
+  async verifyWithCode(
+    @GetUser() user: UserWithoutHiddenAttributes,
+    @Param('code') code: string,
+  ): Promise<any> {
     return this.authService.verifyWithCode(user, code);
+  }
+
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiBearerAuth('Access Token')
+  @ApiBody({ type: RequestChangePasswordDto })
+  // SWAGGER_DOCS:ENDS
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('request-change-password')
+  async changePassword(
+    @GetUser() user: User,
+    @Body() requestChangePasswordDto: RequestChangePasswordDto,
+  ): Promise<any> {}
+
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Change password' })
+  @ApiBearerAuth('Reset Password Token')
+  @ApiBody({ type: ChangePasswordDto })
+  // SWAGGER_DOCS:ENDS
+  @UseGuards(JwtResetPasswordGuard)
+  @Patch('change-password')
+  async resetPassword(
+    @GetUser() user: User,
+    @GetToken() token: string,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<any> {
+    return this.authService.resetPassword(user, token, dto);
   }
 }

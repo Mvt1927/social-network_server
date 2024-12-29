@@ -12,15 +12,15 @@ export class MediaService {
     return `This action returns all media`;
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} media`;
   }
 
-  update(id: number, updateMediaDto: UpdateMediaDto) {
+  update(id: string, updateMediaDto: UpdateMediaDto) {
     return `This action updates a #${id} media`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} media`;
   }
 }

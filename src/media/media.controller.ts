@@ -3,8 +3,15 @@ import { MediaService } from './media.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access/jwt-access.guard';
+import { Roles } from 'src/roles/decorators/roles/roles.decorator';
+import { Role } from '@prisma/client';
+import { RolesGuard } from 'src/roles/guards/roles/roles.guard';
+import { ApiTags } from '@nestjs/swagger';
 
+@Roles(Role.ADMIN)
+@UseGuards(JwtAccessGuard, RolesGuard)
 @Controller('media')
+@ApiTags('Media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
@@ -20,16 +27,16 @@ export class MediaController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.mediaService.findOne(+id);
+    return this.mediaService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMediaDto: UpdateMediaDto) {
-    return this.mediaService.update(+id, updateMediaDto);
+    return this.mediaService.update(id, updateMediaDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.mediaService.remove(+id);
+    return this.mediaService.remove(id);
   }
 }

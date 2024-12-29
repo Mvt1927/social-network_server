@@ -22,6 +22,9 @@ import { JwtModule } from './jwt/jwt.module';
 import { MediaModule } from './media/media.module';
 import { PostModule } from './post/post.module';
 import { MessageModule } from './message/message.module';
+import { CommentModule } from './comment/comment.module';
+import { NotificationModule } from './notification/notification.module';
+import { ReactionModule } from './reaction/reaction.module';
 
 @Module({
   imports: [
@@ -55,7 +58,10 @@ import { MessageModule } from './message/message.module';
     JwtModule,
     MediaModule,
     PostModule,
-    MessageModule
+    MessageModule,
+    CommentModule,
+    NotificationModule,
+    ReactionModule
   ],
   controllers: [AppController],
   providers: [AppService, VerifyEmailGuard, RolesGuard,  JwtAccessStrategy, JwtConfirmStrategy, JwtRefreshStrategy],
