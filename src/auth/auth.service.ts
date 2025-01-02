@@ -150,7 +150,6 @@ export class AuthService {
 
   async returnAuthResponse(
     user: UserWithPartialHiddenAttributes,
-    refresh = false,
   ): Promise<AuthResponse> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { hash, ...userWithoutHash } = user;
@@ -174,22 +173,15 @@ export class AuthService {
     userWithoutHash.email = hideEmail(userWithoutHash.email);
 
     const accessToken = await this.jwtService.signAccessToken(payloadAccess);
-    const refreshToken = !refresh
-      ? await this.jwtService.signRefreshToken(payloadRefresh)
-      : undefined;
+    const refreshToken = await this.jwtService.signRefreshToken(payloadRefresh)
     return {
       statusCode: HttpStatus.OK,
       message: 'User has been successfully authenticated',
-      data: !refresh
-        ? {
-            user: userWithoutHash,
-            token: accessToken,
-            refreshToken: refreshToken,
-          }
-        : {
-            token: accessToken,
-            refreshToken: refreshToken,
-          },
+      data: {
+        user: userWithoutHash,
+        token: accessToken,
+        refreshToken: refreshToken,
+      },
     };
   }
 
@@ -216,7 +208,7 @@ export class AuthService {
       accessToken,
       Date.now() + this.jwtService.jwtConfig.access.time * 1000,
     );
-    return this.returnAuthResponse(user, true);
+    return this.returnAuthResponse(user);
   }
 
   async logout(token: string, logoutDto: LogoutDto): Promise<any> {

@@ -90,7 +90,7 @@ export class NotificationController {
   @ApiBearerAuth('Access Token')
   @ApiParam({ name: 'id', required: true, type: String })
   // SWAGGER_DOCS:ENDS
-  @Patch(':id/read')
+  @Patch('read')
   markAsRead(@Param('id') id: string, @GetUser() user: User): Promise<NotificationData> {
     return this.notificationService.markAsRead(id, user);
   }

@@ -311,3 +311,11 @@ enum NotificationType {
   CHAT_SEND_MESSAGE
   COMMENT_REPLY
 }
+
+enum PostsType {
+  ALL
+  BOOKMARK
+  FOLLOWING
+  FOR_YOU
+  OWN
+}

@@ -14,7 +14,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access/jwt-access.guard';
 import { GetUser } from 'src/users/decorators/get-user/get-user.decorator';
-import { User } from '@prisma/client';
+import { PostsType, User } from '@prisma/client';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -25,7 +25,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { VerifyEmailGuard } from 'src/verification/guards/verify-email/verify-email.guard';
-import { PostType } from './entities/post.entity';
 import { query } from 'express';
 
 @UseGuards(JwtAccessGuard, VerifyEmailGuard)
@@ -48,15 +47,15 @@ export class PostController {
   @ApiOperation({ summary: 'Get all posts' })
   @ApiQuery({ name: 'cursor', required: false, type: String })
   @ApiQuery({
-    name: 'q',
+    name: 'postType',
     required: false,
     content: {
       schema: {
-        example: PostType.ALL,
+        example: PostsType.ALL,
       },
     },
-    enum: PostType,
-    example: PostType.ALL,
+    enum: PostsType,
+    example: PostsType.ALL,
     // type: String,
   })
   // @ApiProperty({ required: false })
@@ -66,13 +65,17 @@ export class PostController {
     @GetUser() user: User,
     @Query('cursor') cursor: string | undefined,
     @Query('pageSize') pageSize: string = '10',
-    @Query('PostType') postType: PostType = PostType.ALL,
-    @Query('q') searchQuery: String | undefined,
-    @Query() query: any,
+    @Query('postType') postType: PostsType = PostsType.ALL,
   ) {
     return this.postService.findAll(user, cursor, +pageSize, postType);
   }
 
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Search posts' })
+  @ApiQuery({ name: 'cursor', required: false, type: String })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  @ApiQuery({ name: 'q', required: false, type: String })
+  // SWAGGER_DOCS:ENDS
   @Get('search')
   async search(
     @GetUser() user: User,

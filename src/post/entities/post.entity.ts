@@ -73,10 +73,3 @@ export interface PostPage {
   nextCursor: string | null;
 }
 
-export enum PostType {
-  ALL,
-  BOOKMARK,
-  FOLLOWING,
-  FOR_YOU,
-  OWN
-}

@@ -7,14 +7,14 @@ import {
 } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { Prisma, User } from '@prisma/client';
+import { PostsType, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   getPostDataInclude,
   getPostDataOmit,
   postInclude,
-  PostType,
 } from './entities/post.entity';
+import { ca } from 'date-fns/locale';
 // import prune from 'json-prune';
 
 @Injectable()
@@ -59,13 +59,13 @@ export class PostService {
     user: User,
     cursor: string | undefined,
     pageSize: number,
-    postType: PostType,
+    postType: PostsType,
   ) {
     try {
       let postWhereInput: Prisma.PostWhereInput = {};
 
       switch (postType) {
-        case PostType.BOOKMARK:
+        case PostsType.BOOKMARK:
           postWhereInput = {
             bookmarks: {
               some: {
@@ -74,21 +74,39 @@ export class PostService {
             },
             published: true,
           };
-        case PostType.FOR_YOU:
+          break;
+        case PostsType.FOLLOWING:
+          postWhereInput = {
+            author: {
+              followers: {
+                some: {
+                  id: user.id,
+                },
+              },
+            },
+            published: true,
+          };
+          break;
+        case PostsType.FOR_YOU:
           postWhereInput = {
             published: true,
           };
-        case PostType.ALL:
+          break;
+        case PostsType.ALL:
           if (!user.roles.includes('ADMIN')) {
             postWhereInput = {
               published: true,
             };
           }
+          break;
         default:
           postWhereInput = {
             authorId: user.id,
           };
+          break;
       }
+
+      console.log(postWhereInput);
 
       const posts = await this.prismaService.post.findMany({
         where: { ...postWhereInput },
