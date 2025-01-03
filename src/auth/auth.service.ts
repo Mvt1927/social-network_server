@@ -27,11 +27,12 @@ import { time } from 'console';
 import { EmailService } from 'src/email/email.service';
 import e from 'express';
 import { User } from '@prisma/client';
-import { getProfileUserDataSelect } from 'src/users/entities/user.entities';
+import { getMinnimalUserDataSelect, getProfileUserDataSelect } from 'src/users/entities/user.entities';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RequestChangePasswordDto } from './dto/request-change-password.dto';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 type AuthResponse = any;
 
@@ -173,7 +174,7 @@ export class AuthService {
     userWithoutHash.email = hideEmail(userWithoutHash.email);
 
     const accessToken = await this.jwtService.signAccessToken(payloadAccess);
-    const refreshToken = await this.jwtService.signRefreshToken(payloadRefresh)
+    const refreshToken = await this.jwtService.signRefreshToken(payloadRefresh);
     return {
       statusCode: HttpStatus.OK,
       message: 'User has been successfully authenticated',
@@ -390,6 +391,24 @@ export class AuthService {
     return {
       statusCode: HttpStatus.OK,
       message: 'Email has been successfully verified',
+    };
+  }
+
+  async updateProfile(data: UpdateProfileDto, user: User) {
+    const updatedUser = await this.usersService.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        ...data,
+      },
+      select: getMinnimalUserDataSelect(),
+    });
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Profile has been successfully updated',
+      data: { user: updatedUser },
     };
   }
 }

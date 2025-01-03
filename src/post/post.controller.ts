@@ -70,6 +70,11 @@ export class PostController {
     return this.postService.findAll(user, cursor, +pageSize, postType);
   }
 
+  @Get('trending')
+  getTrendingTopics() {
+    return this.postService.getTrendingTags();
+  }
+  
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Search posts' })
   @ApiQuery({ name: 'cursor', required: false, type: String })
@@ -114,4 +119,20 @@ export class PostController {
   remove(@GetUser() user: User, @Param('id') id: string) {
     return this.postService.remove(id, user);
   }
+
+  @Get(':id/bookmark')
+  getBookmarkInfo(@GetUser() user: User, @Param('id') id: string) {
+    return this.postService.getBookmarkInfo(id, user);
+  }
+
+  @Post(':id/bookmark')
+  bookmark(@GetUser() user: User, @Param('id') id: string) {
+    return this.postService.bookmark(id, user);
+  }
+
+  @Delete(':id/bookmark')
+  unbookmark(@GetUser() user: User, @Param('id') id: string) {
+    return this.postService.unbookmark(id, user);
+  }
+  
 }

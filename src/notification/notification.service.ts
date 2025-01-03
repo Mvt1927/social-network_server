@@ -84,10 +84,9 @@ export class NotificationService {
     }
   }
 
-  markAsRead(id: string, user: User): Promise<NotificationData> {
+  async markAsRead(user: User) {
     try {
       let notificationUpdateWhereQuery = {
-        id: id,
         recipientId: undefined,
       } satisfies Prisma.NotificationWhereInput;
 
@@ -95,13 +94,14 @@ export class NotificationService {
         notificationUpdateWhereQuery.recipientId = user.id;
       }
 
-      return this.prismaService.notification.update({
+      await this.prismaService.notification.updateMany({
         where: notificationUpdateWhereQuery,
         data: {
           read: true,
         },
-        include: notificationsInclude,
       });
+
+      return { message: 'Notifications marked as read' };
     } catch (error) {
       throw new InternalServerErrorException(
         'Error occured while updating notification',

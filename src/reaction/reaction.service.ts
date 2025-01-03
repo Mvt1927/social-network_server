@@ -120,7 +120,7 @@ export class PostReactionService {
     return `This action updates a #${id} reaction`;
   }
 
-  async remove(user: User, postId: string, id: string) {
+  async remove(user: User, postId: string) {
     try {
       const post = await this.prismaService.post.findUnique({
         where: {
@@ -132,6 +132,7 @@ export class PostReactionService {
         },
       });
 
+      console.log('post', post);
       if (!post || (!post.published && post.authorId !== user.id)) {
         throw new NotFoundException('Post not found');
       }
@@ -156,6 +157,7 @@ export class PostReactionService {
       ]);
       return reaction;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException('Error while deleting reaction');
     }
   }

@@ -61,7 +61,8 @@ import { ReactionModule } from './reaction/reaction.module';
     MessageModule,
     CommentModule,
     NotificationModule,
-    ReactionModule
+    ReactionModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService, VerifyEmailGuard, RolesGuard,  JwtAccessStrategy, JwtConfirmStrategy, JwtRefreshStrategy],

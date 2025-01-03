@@ -62,13 +62,14 @@ export class PostReactionController {
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Delete a reaction' })
   // SWAGGER_DOCS:ENDS
-  @Delete(':id')
+  @Delete('')
   remove(
     @GetUser() user: User,
     @Param('postId') postId: string,
-    @Param('id') id: string,
+    // @Param('id') id: string,
   ) {
-    return this.reactionService.remove(user, postId, id);
+    console.log('delete reaction');
+    return this.reactionService.remove(user, postId);
   }
 }
 

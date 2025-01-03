@@ -14,6 +14,7 @@ export function getPostDataInclude() {
     reaction: {
       select: {
         authorId: true,
+        type: true,
       },
     },
     bookmarks: {
@@ -49,6 +50,7 @@ export const postInclude = {
   reaction: {
     select: {
       authorId: true,
+      type: true,
     },
   },
   bookmarks: {

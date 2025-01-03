@@ -28,6 +28,7 @@ import { email } from '@snaplet/copycat/dist/email';
 import { RequestChangePasswordDto } from './dto/request-change-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtResetPasswordGuard } from './guards/jwt-reset-password/jwt-reset-password.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 type AuthResponse = any;
 // SWAGGER_DOCS:BEGINS
@@ -81,6 +82,18 @@ export class AuthController {
   @UseGuards(JwtAccessGuard, VerifyEmailGuard)
   async profile(@GetUser() user: UserWithoutHiddenAttributes): Promise<any> {
     return this.authService.profile(user);
+  }
+
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Update user profile' })
+  @ApiBearerAuth('Access Token')
+  @ApiBody({ type: UpdateProfileDto })
+  // SWAGGER_DOCS:ENDS
+  @HttpCode(HttpStatus.OK)
+  @Patch('profile')
+  @UseGuards(JwtAccessGuard)
+  async updateProfile(@GetUser() user: User, @Body() dto: UpdateProfileDto): Promise<any> {
+    return this.authService.updateProfile(dto, user);
   }
 
   // SWAGGER_DOCS:BEGINS

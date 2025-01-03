@@ -66,13 +66,21 @@ export class NotificationController {
   getUnreadCount(@GetUser() user: User): Promise<NotificationUnreadCount> {
     return this.notificationService.getUnreadCount(user);
   }
-
+  
+  // SWAGGER_DOCS:BEGINS
+  @ApiOperation({ summary: 'Mark notifications as read' })
+  @ApiBearerAuth('Access Token')
+  // SWAGGER_DOCS:ENDS
+  @Patch('read')
+  markAsRead(@GetUser() user: User) {
+    return this.notificationService.markAsRead(user);
+  }
   
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.notificationService.findOne(id);
   }
-
+  
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Update a notification by id - ADMIN' })
   @Roles(Role.ADMIN)
@@ -85,15 +93,6 @@ export class NotificationController {
     return this.notificationService.update(id, updateNotificationDto);
   }
 
-  // SWAGGER_DOCS:BEGINS
-  @ApiOperation({ summary: 'Mark a notification as read' })
-  @ApiBearerAuth('Access Token')
-  @ApiParam({ name: 'id', required: true, type: String })
-  // SWAGGER_DOCS:ENDS
-  @Patch('read')
-  markAsRead(@Param('id') id: string, @GetUser() user: User): Promise<NotificationData> {
-    return this.notificationService.markAsRead(id, user);
-  }
 
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Delete a notification by id - ADMIN' })

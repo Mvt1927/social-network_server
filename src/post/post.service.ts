@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -15,11 +16,84 @@ import {
   postInclude,
 } from './entities/post.entity';
 import { ca } from 'date-fns/locale';
+import e from 'express';
 // import prune from 'json-prune';
 
 @Injectable()
 export class PostService {
   constructor(private readonly prismaService: PrismaService) {}
+  async getBookmarkInfo(id: string, user: User) {
+    try {
+      const bookmark = await this.prismaService.bookmark.findUnique({
+        where: {
+          userId_postId: {
+            userId: user.id,
+            postId: id,
+          },
+        },
+      });
+
+      const data = {
+        isBookmarkedByUser: !!bookmark,
+      };
+
+      return data;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch bookmark info');
+    }
+  }
+  async bookmark(id: string, user: User) {
+    try {
+      await this.prismaService.bookmark.upsert({
+        where: {
+          userId_postId: {
+            userId: user.id,
+            postId: id,
+          },
+        },
+        create: {
+          userId: user.id,
+          postId: id,
+        },
+        update: {},
+      });
+
+      return {
+        statusCode: 200,
+        message: 'Post bookmarked successfully',
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to bookmark post', error);
+    }
+  }
+  async unbookmark(id: string, user: User) {
+    try {
+      await this.prismaService.bookmark.delete({
+        where: {
+          userId_postId: {
+            userId: user.id,
+            postId: id,
+          },
+        },
+      });
+
+      return {
+        statusCode: 200,
+        message: 'Post unbookmarked successfully',
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to unbookmark post');
+    }
+  }
 
   create(user: User, createPostDto: CreatePostDto) {
     const newPost = this.prismaService.post.create({
@@ -80,7 +154,7 @@ export class PostService {
             author: {
               followers: {
                 some: {
-                  id: user.id,
+                  followerId: user.id,
                 },
               },
             },
@@ -290,5 +364,30 @@ export class PostService {
     ).posts[0];
 
     return deletedPost;
+  }
+
+  async getTrendingTags() {
+    try {
+      const result = await this.prismaService.$queryRaw<
+        { hashtag: string; count: bigint }[]
+      >`
+            SELECT LOWER(unnest(regexp_matches(message.content, '#[[:alnum:]_]+', 'g'))) AS hashtag, COUNT(*) AS count
+            FROM "posts"
+            JOIN "messages" AS message ON "posts"."messageId" = message.id
+            GROUP BY (hashtag)
+            ORDER BY count DESC, hashtag ASC
+            LIMIT 5
+        `;
+      console.log(result);
+      return result.map((row) => ({
+        hashtag: row.hashtag,
+        count: Number(row.count),
+      }));
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to fetch trending tags',
+        error,
+      );
+    }
   }
 }
