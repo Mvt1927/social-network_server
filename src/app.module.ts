@@ -25,6 +25,7 @@ import { MessageModule } from './message/message.module';
 import { CommentModule } from './comment/comment.module';
 import { NotificationModule } from './notification/notification.module';
 import { ReactionModule } from './reaction/reaction.module';
+import { JwtResetPasswordStrategy } from './auth/strategies/jwt-reset-password/jwt-reset-password.strategy';
 
 @Module({
   imports: [
@@ -65,7 +66,7 @@ import { ReactionModule } from './reaction/reaction.module';
     UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService, VerifyEmailGuard, RolesGuard,  JwtAccessStrategy, JwtConfirmStrategy, JwtRefreshStrategy],
+  providers: [AppService, VerifyEmailGuard, RolesGuard,  JwtAccessStrategy, JwtConfirmStrategy, JwtRefreshStrategy, JwtResetPasswordStrategy],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

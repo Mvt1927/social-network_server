@@ -8,7 +8,7 @@ import { JwtService } from 'src/jwt/jwt.service';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
-export class JwtConfirmStrategy extends PassportStrategy(
+export class JwtResetPasswordStrategy extends PassportStrategy(
   Strategy,
   'jwt-reset-password',
 ) {

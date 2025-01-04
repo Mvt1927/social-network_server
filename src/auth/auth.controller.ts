@@ -155,16 +155,15 @@ export class AuthController {
 
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Request password reset' })
-  @ApiBearerAuth('Access Token')
   @ApiBody({ type: RequestChangePasswordDto })
   // SWAGGER_DOCS:ENDS
-  @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.OK)
   @Post('request-change-password')
   async changePassword(
-    @GetUser() user: User,
     @Body() requestChangePasswordDto: RequestChangePasswordDto,
-  ): Promise<any> {}
+  ): Promise<any> {
+    return this.authService.requestResetPassword(requestChangePasswordDto);
+  }
 
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Change password' })

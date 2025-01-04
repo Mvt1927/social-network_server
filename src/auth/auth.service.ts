@@ -27,7 +27,10 @@ import { time } from 'console';
 import { EmailService } from 'src/email/email.service';
 import e from 'express';
 import { User } from '@prisma/client';
-import { getMinnimalUserDataSelect, getProfileUserDataSelect } from 'src/users/entities/user.entities';
+import {
+  getMinnimalUserDataSelect,
+  getProfileUserDataSelect,
+} from 'src/users/entities/user.entities';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RequestChangePasswordDto } from './dto/request-change-password.dto';
 import { formatDuration, intervalToDuration } from 'date-fns';
@@ -279,22 +282,21 @@ export class AuthService {
     }
   }
 
-  async requestResetPassword(user: User, dto: RequestChangePasswordDto) {
-    if (dto.email !== user.email) {
+  async requestResetPassword(dto: RequestChangePasswordDto) {
+    const user = await this.usersService.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    if (!user) {
       throw new BadRequestException({
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'Invalid email',
       });
     }
 
-    if (!(await argon2.verify(user.hash, dto.password))) {
-      throw new BadRequestException({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Invalid password',
-      });
-    }
-
-    const token = this.jwtService.signResetPasswordToken({
+    const token = await this.jwtService.signResetPasswordToken({
       user: {
         id: user.id,
       },
@@ -304,7 +306,7 @@ export class AuthService {
     const templateContent = readFileSync(templatePath, 'utf-8');
     const template = Handlebars.compile(templateContent);
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/user/change-password?token=${token}`;
     const html = template({
       name: user.username,
       resetLink,
