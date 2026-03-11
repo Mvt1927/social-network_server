@@ -10,5 +10,7 @@ export const extractVersionValue = (version: string): number => {
 };
 
 export const generateNumberCode = (length: number): string => {
-  return Math.floor(Math.random() * Math.pow(10, length)).toString().padStart(length, '0');
-}
+  return Math.floor(Math.random() * Math.pow(10, length))
+    .toString()
+    .padStart(length, '0');
+};

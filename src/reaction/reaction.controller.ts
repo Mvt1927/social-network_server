@@ -13,7 +13,12 @@ import { CreateReactionDto } from './dto/create-reaction.dto';
 import { UpdateReactionDto } from './dto/update-reaction.dto';
 import { GetUser } from 'src/users/decorators/get-user/get-user.decorator';
 import { User } from '@prisma/client';
-import { ApiBearerAuth, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiProperty,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access/jwt-access.guard';
 import { VerifyEmailGuard } from 'src/verification/guards/verify-email/verify-email.guard';
 import { get } from 'lodash';
@@ -104,7 +109,8 @@ export class CommentReactionController {
   remove(
     @GetUser() user: User,
     @Param('commentId') commentId: string,
-    @Param('id') id: string) {
+    @Param('id') id: string,
+  ) {
     // return this.reactionService.remove(id);
   }
 }

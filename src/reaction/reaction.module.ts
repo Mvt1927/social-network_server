@@ -4,9 +4,7 @@ import { PostReactionController } from './reaction.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports: [
-    PrismaModule,
-  ],
+  imports: [PrismaModule],
   controllers: [PostReactionController],
   providers: [PostReactionService],
 })

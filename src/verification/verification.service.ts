@@ -50,7 +50,7 @@ export class VerificationService {
       `${this.VERIFICATION}:${user.id}:${user.email}`,
     );
 
-    console.log("cachedVerificationCode: ",cachedVerificationCode)
+    console.log('cachedVerificationCode: ', cachedVerificationCode);
     if (!cachedVerificationCode) {
       return false;
     }
@@ -58,7 +58,6 @@ export class VerificationService {
     if (cachedVerificationCode !== verificationCode) {
       return false;
     }
-
 
     await this.cacheManager.del(
       `${this.VERIFICATION}:${user.id}:${user.email}`,
@@ -77,5 +76,4 @@ export class VerificationService {
 
     return true;
   }
-
 }

@@ -362,7 +362,7 @@ export class AuthService {
     user: UserWithoutHiddenAttributes,
     tokenPayload: any,
   ): Promise<any> {
-    let code = null;
+    const code = null;
 
     if (
       !tokenPayload ||

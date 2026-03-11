@@ -18,7 +18,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh/jwt-refresh.strateg
     JwtModule,
     TokenBlacklistModule,
     VerificationModule,
-    EmailModule
+    EmailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

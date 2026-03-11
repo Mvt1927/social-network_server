@@ -1,5 +1,4 @@
-import { UserWithPartialHiddenAttributes } from "../types";
-
+import { UserWithPartialHiddenAttributes } from '../types';
 
 // export const test: UserWithPartialHiddenAttributes = {
 //   email: 'test',

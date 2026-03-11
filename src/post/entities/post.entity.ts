@@ -74,4 +74,3 @@ export interface PostPage {
   posts: PostData[];
   nextCursor: string | null;
 }
-

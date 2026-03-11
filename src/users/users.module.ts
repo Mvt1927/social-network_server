@@ -7,8 +7,6 @@ import { UsersController } from './users.controller';
   imports: [PrismaModule],
   providers: [UsersService],
   exports: [UsersService],
-  controllers: [
-    UsersController
-  ],
+  controllers: [UsersController],
 })
 export class UsersModule {}

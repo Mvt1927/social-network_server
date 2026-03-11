@@ -5,10 +5,7 @@ import { JwtModule } from 'src/jwt/jwt.module';
 import { UsersModule } from 'src/users/users.module';
 
 @Module({
-  imports: [
-    JwtModule,
-    UsersModule,
-  ],
+  imports: [JwtModule, UsersModule],
   providers: [VerificationService],
   exports: [VerificationService],
 })

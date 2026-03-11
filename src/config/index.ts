@@ -2,7 +2,6 @@ import { USER_OMIT } from 'src/users/constants';
 import { IConfig } from './interfaces/config.interface';
 
 export function config(): IConfig {
-
   return {
     id: process.env.SERVER_ID,
     version: process.env.SERVER_VERSION,

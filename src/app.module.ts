@@ -66,7 +66,15 @@ import { JwtResetPasswordStrategy } from './auth/strategies/jwt-reset-password/j
     UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService, VerifyEmailGuard, RolesGuard,  JwtAccessStrategy, JwtConfirmStrategy, JwtRefreshStrategy, JwtResetPasswordStrategy],
+  providers: [
+    AppService,
+    VerifyEmailGuard,
+    RolesGuard,
+    JwtAccessStrategy,
+    JwtConfirmStrategy,
+    JwtRefreshStrategy,
+    JwtResetPasswordStrategy,
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

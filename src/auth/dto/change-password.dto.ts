@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, Matches, MinLength } from "class-validator";
-import { PASSWORD_ERROR_MESSAGE, PASSWORD_REGEX } from "../constants";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
+import { PASSWORD_ERROR_MESSAGE, PASSWORD_REGEX } from '../constants';
 
 export class ChangePasswordDto {
   @ApiProperty()

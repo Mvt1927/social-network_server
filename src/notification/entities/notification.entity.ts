@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client';
 export const notificationsInclude = {
-  issuer:{
+  issuer: {
     select: {
       username: true,
       fullname: true,
@@ -17,10 +17,10 @@ export const notificationsInclude = {
           _count: {
             select: {
               attachments: true,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     },
   },
 } satisfies Prisma.NotificationInclude;
@@ -30,8 +30,8 @@ export type NotificationData = Prisma.NotificationGetPayload<{
 }>;
 
 export interface NotificationPage {
-  notifications: NotificationData[],
-  nextCursor: string | null,
+  notifications: NotificationData[];
+  nextCursor: string | null;
 }
 
 export interface NotificationUnreadCount {

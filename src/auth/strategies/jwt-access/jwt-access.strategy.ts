@@ -20,7 +20,6 @@ export class JwtAccessStrategy extends PassportStrategy(
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: jwtService.jwtConfig.access.secret,
-      
     });
   }
 
@@ -30,7 +29,7 @@ export class JwtAccessStrategy extends PassportStrategy(
 
   async validate(payload: any) {
     // console.log('payload', payload);
-    
+
     if (!payload || !payload.sub || !payload.sub.user) {
       throw new UnauthorizedException({
         message: 'Invalid token',
@@ -47,6 +46,6 @@ export class JwtAccessStrategy extends PassportStrategy(
       });
     }
 
-    return {user, tokenPayload: payload};
+    return { user, tokenPayload: payload };
   }
 }

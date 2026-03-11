@@ -25,7 +25,11 @@ import { JwtAccessGuard } from 'src/auth/guards/jwt-access/jwt-access.guard';
 import { RolesGuard } from 'src/roles/guards/roles/roles.guard';
 import { VerifyEmailGuard } from 'src/verification/guards/verify-email/verify-email.guard';
 import { GetUser } from 'src/users/decorators/get-user/get-user.decorator';
-import { NotificationData, NotificationPage, NotificationUnreadCount } from './entities/notification.entity';
+import {
+  NotificationData,
+  NotificationPage,
+  NotificationUnreadCount,
+} from './entities/notification.entity';
 
 @Controller('notification')
 @ApiTags('Notification')
@@ -66,7 +70,7 @@ export class NotificationController {
   getUnreadCount(@GetUser() user: User): Promise<NotificationUnreadCount> {
     return this.notificationService.getUnreadCount(user);
   }
-  
+
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Mark notifications as read' })
   @ApiBearerAuth('Access Token')
@@ -75,12 +79,12 @@ export class NotificationController {
   markAsRead(@GetUser() user: User) {
     return this.notificationService.markAsRead(user);
   }
-  
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.notificationService.findOne(id);
   }
-  
+
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Update a notification by id - ADMIN' })
   @Roles(Role.ADMIN)
@@ -92,7 +96,6 @@ export class NotificationController {
   ) {
     return this.notificationService.update(id, updateNotificationDto);
   }
-
 
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Delete a notification by id - ADMIN' })

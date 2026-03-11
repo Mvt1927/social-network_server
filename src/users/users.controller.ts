@@ -85,5 +85,4 @@ export class UsersController {
 
     return this.userService.getUniqueUsername(username, user);
   }
-
 }

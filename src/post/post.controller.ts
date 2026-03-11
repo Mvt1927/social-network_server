@@ -74,7 +74,7 @@ export class PostController {
   getTrendingTopics() {
     return this.postService.getTrendingTags();
   }
-  
+
   // SWAGGER_DOCS:BEGINS
   @ApiOperation({ summary: 'Search posts' })
   @ApiQuery({ name: 'cursor', required: false, type: String })
@@ -86,7 +86,7 @@ export class PostController {
     @GetUser() user: User,
     @Query('cursor') cursor: string | undefined,
     @Query('pageSize') pageSize: string = '10',
-    @Query('q') searchQuery: string = "",
+    @Query('q') searchQuery: string = '',
     @Query() query: any,
   ) {
     return this.postService.search(user, cursor, +pageSize, searchQuery);
@@ -134,5 +134,4 @@ export class PostController {
   unbookmark(@GetUser() user: User, @Param('id') id: string) {
     return this.postService.unbookmark(id, user);
   }
-  
 }

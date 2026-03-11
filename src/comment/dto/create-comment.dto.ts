@@ -1,8 +1,15 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsBoolean, IsDefined, IsOptional, IsString, ValidateIf, ValidateNested } from "class-validator";
-import { CreateMediaDto } from "src/media/dto/create-media.dto";
-import { CreatePostDto } from "src/post/dto/create-post.dto";
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsDefined,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
+import { CreateMediaDto } from 'src/media/dto/create-media.dto';
+import { CreatePostDto } from 'src/post/dto/create-post.dto';
 
 export class CreateCommentDto {
   @ApiProperty({

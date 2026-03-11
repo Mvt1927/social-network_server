@@ -92,7 +92,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Patch('profile')
   @UseGuards(JwtAccessGuard)
-  async updateProfile(@GetUser() user: User, @Body() dto: UpdateProfileDto): Promise<any> {
+  async updateProfile(
+    @GetUser() user: User,
+    @Body() dto: UpdateProfileDto,
+  ): Promise<any> {
     return this.authService.updateProfile(dto, user);
   }
 

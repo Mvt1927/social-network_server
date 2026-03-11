@@ -87,9 +87,7 @@ export class UsersService {
       });
 
       const nextCursor =
-        followers.length > pageSize
-          ? followers[followers.length - 1].id
-          : null;
+        followers.length > pageSize ? followers[followers.length - 1].id : null;
 
       const data = {
         followers: followers.slice(0, pageSize),

@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { UserWithoutHiddenAttributes } from 'src/users/types';
 
@@ -13,7 +19,7 @@ export class VerifyEmailGuard implements CanActivate {
     if (!user) {
       return false;
     }
-    
+
     if (!user.isVerified) {
       throw new UnauthorizedException({
         statusCode: HttpStatus.FORBIDDEN,

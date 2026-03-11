@@ -4,9 +4,7 @@ import { NotificationController } from './notification.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports: [
-    PrismaModule
-  ],
+  imports: [PrismaModule],
   controllers: [NotificationController],
   providers: [NotificationService],
 })

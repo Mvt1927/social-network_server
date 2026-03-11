@@ -3,7 +3,12 @@ import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { Prisma, Role, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { NotificationData, NotificationPage, notificationsInclude, NotificationUnreadCount } from './entities/notification.entity';
+import {
+  NotificationData,
+  NotificationPage,
+  notificationsInclude,
+  NotificationUnreadCount,
+} from './entities/notification.entity';
 
 @Injectable()
 export class NotificationService {
@@ -86,7 +91,7 @@ export class NotificationService {
 
   async markAsRead(user: User) {
     try {
-      let notificationUpdateWhereQuery = {
+      const notificationUpdateWhereQuery = {
         recipientId: undefined,
       } satisfies Prisma.NotificationWhereInput;
 
